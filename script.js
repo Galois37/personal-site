@@ -49,6 +49,13 @@ function escapeHtml(value) {
   })[char]);
 }
 
+function imageUrlWithVersion(url, version) {
+  const normalized = String(url || "").trim().replace(/\\/g, "/");
+  if (!normalized) return "";
+  const cacheKey = encodeURIComponent(String(version || Date.now()).replace(/\s+/g, "-"));
+  return `${normalized}${normalized.includes("?") ? "&" : "?"}v=${cacheKey}`;
+}
+
 function applyTheme(theme) {
   const nextTheme = theme === "light" ? "light" : "dark";
   document.documentElement.dataset.theme = nextTheme;
@@ -388,7 +395,7 @@ function renderFriends(items) {
     <a class="friend-card" href="${escapeHtml(item.url || "#")}" target="_blank" rel="noreferrer">
       <span class="friend-orbit" aria-hidden="true"></span>
       <span class="friend-avatar">
-        ${item.label ? `<img src="${escapeHtml(item.label)}" alt="${escapeHtml(item.title || "友链")} 的头像" loading="lazy">` : `<span>${escapeHtml((item.title || "友").slice(0, 1))}</span>`}
+        ${item.label ? `<img src="${escapeHtml(imageUrlWithVersion(item.label, item.updated_at || item.id))}" alt="${escapeHtml(item.title || "友链")} 的头像" loading="lazy">` : `<span>${escapeHtml((item.title || "友").slice(0, 1))}</span>`}
       </span>
       <span class="friend-body">
         <span class="friend-meta"><span class="friend-dot"></span> Online</span>

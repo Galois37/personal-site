@@ -64,6 +64,13 @@ function escapeHtml(value) {
   })[char]);
 }
 
+function imageUrlWithVersion(url, version) {
+  const normalized = String(url || "").trim().replace(/\\/g, "/");
+  if (!normalized) return "";
+  const cacheKey = encodeURIComponent(String(version || Date.now()).replace(/\s+/g, "-"));
+  return `${normalized}${normalized.includes("?") ? "&" : "?"}v=${cacheKey}`;
+}
+
 function applyTheme(theme) {
   const nextTheme = theme === "light" ? "light" : "dark";
   document.documentElement.dataset.theme = nextTheme;
@@ -214,9 +221,9 @@ function renderContentItems(items) {
   });
 }
 
-function friendAvatar(url, title) {
+function friendAvatar(url, title, version) {
   if (url) {
-    return `<img class="admin-friend-avatar" src="${escapeHtml(url)}" alt="${escapeHtml(title || "友链头像")}" loading="lazy">`;
+    return `<img class="admin-friend-avatar" src="${escapeHtml(imageUrlWithVersion(url, version))}" alt="${escapeHtml(title || "友链头像")}" loading="lazy">`;
   }
   return `<span class="admin-friend-avatar admin-friend-placeholder">${escapeHtml((title || "友").slice(0, 1))}</span>`;
 }
@@ -233,7 +240,7 @@ function renderFriendItems(items) {
     <article class="glass-card admin-row friend-edit-row" data-content-id="${item.id}">
       <div class="admin-row-head">
         <div>
-          ${friendAvatar(item.label, item.title)}
+          ${friendAvatar(item.label, item.title, item.updated_at || item.id)}
           <strong>${escapeHtml(item.title || "")}</strong>
           <span class="admin-pill">${escapeHtml(item.status || "visible")}</span>
         </div>
