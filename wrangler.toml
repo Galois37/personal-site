@@ -1,0 +1,16 @@
+name = "personal-site"
+compatibility_date = "2026-06-02"
+pages_build_output_dir = "."
+
+[[d1_databases]]
+binding = "DB"
+database_name = "galois37_site"
+database_id = "da3e8bc3-2fdb-47f0-ab11-52531d7384d1"
+
+[vars]
+ADMIN_USERNAME = "Galois37"
+
+# Required secrets, set with Wrangler or Cloudflare Dashboard:
+# ADMIN_PASSWORD_HASH = sha256(admin password)
+# ADMIN_SESSION_TOKEN = long random admin session token
+# ADMIN_TOKEN_HASH = sha256(ADMIN_SESSION_TOKEN)

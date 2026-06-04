@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>控制台 | Galois37の完美算术教室</title>
+  <meta name="description" content="Galois37 网站控制台。">
+  <link rel="stylesheet" href="styles.css?v=20260604-friends">
+</head>
+<body data-page="admin">
+  <main class="admin-shell">
+    <section class="admin-login" data-admin-login>
+      <p class="eyebrow">Admin</p>
+      <h1>控制台</h1>
+      <p>站长账号登录后会自动进入控制台；也可以继续使用控制台密码登录。</p>
+      <form class="ask-form admin-form" data-login-form>
+        <label>
+          管理密码
+          <input type="password" name="password" placeholder="输入 ADMIN_PASSWORD">
+        </label>
+        <button class="button primary" type="submit">登录</button>
+        <p class="form-status" role="status" aria-live="polite"></p>
+      </form>
+    </section>
+
+    <section class="admin-dashboard" data-admin-dashboard hidden>
+      <div class="section-title">
+        <p class="eyebrow">Dashboard</p>
+        <h1>站点管理</h1>
+        <button class="theme-toggle admin-theme-toggle" type="button" data-theme-toggle aria-label="切换白天模式和黑夜模式" title="切换主题">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v2M12 19v2M5.64 5.64l1.42 1.42M16.95 16.95l1.41 1.41M3 12h2M19 12h2M5.64 18.36l1.42-1.42M16.95 7.05l1.41-1.41"/><circle cx="12" cy="12" r="4"/></svg>
+        </button>
+      </div>
+
+      <nav class="admin-tabs" aria-label="控制台分区">
+        <button type="button" class="is-active" data-admin-tab="overview">概览</button>
+        <button type="button" data-admin-tab="settings">文案</button>
+        <button type="button" data-admin-tab="content">内容</button>
+        <button type="button" data-admin-tab="friends">友链</button>
+        <button type="button" data-admin-tab="moments">说说</button>
+        <button type="button" data-admin-tab="messages">提问</button>
+        <button type="button" data-admin-tab="comments">评论</button>
+      </nav>
+
+      <section class="section admin-section admin-view" data-admin-view="overview">
+        <h2>概览</h2>
+        <p class="aside-text">快速查看访问、提问和评论的数量。</p>
+        <div class="card-grid">
+        <article class="glass-card">
+          <h2>访问统计</h2>
+          <p data-stat-views>等待读取</p>
+        </article>
+        <article class="glass-card">
+          <h2>提问箱</h2>
+          <p data-stat-messages>等待读取</p>
+        </article>
+        <article class="glass-card">
+          <h2>评论区</h2>
+          <p data-stat-comments>等待读取</p>
+        </article>
+        </div>
+      </section>
+
+      <section class="section admin-section admin-view" data-admin-view="settings" hidden>
+        <h2>网站文案设置</h2>
+        <p class="aside-text">这里保存的是常用文案。保存后前台会自动读取，不需要改 HTML。</p>
+        <form class="ask-form settings-form" data-settings-form>
+          <label>网站名<input type="text" name="site.name"></label>
+          <label>首页昵称<input type="text" name="home.nickname"></label>
+          <label>首页欢迎语<input type="text" name="home.subtitle"></label>
+          <label>关于页标语<input type="text" name="about.quote"></label>
+          <label>自我介绍正文<textarea name="about.bio" rows="8"></textarea></label>
+          <label>知乎链接<input type="url" name="social.zhihu"></label>
+          <label>小红书链接<input type="url" name="social.xhs"></label>
+          <label>GitHub 链接<input type="url" name="social.github"></label>
+          <label>QQ<input type="text" name="social.qq"></label>
+          <label>QQ 邮箱<input type="email" name="social.email"></label>
+          <label>笔记空间标题<input type="text" name="rooms.notesTitle"></label>
+          <label>文章项目空间标题<input type="text" name="rooms.articlesTitle"></label>
+          <label>提问箱空间标题<input type="text" name="rooms.askTitle"></label>
+          <button class="button primary" type="submit">保存文案</button>
+          <p class="form-status" role="status" aria-live="polite"></p>
+        </form>
+      </section>
+
+      <section class="section admin-section admin-view" data-admin-view="content" hidden>
+        <h2>导入笔记 / 项目</h2>
+        <p class="aside-text">可以导入或编辑标题、说明和链接。长期连载笔记建议保持同一个 PDF 路径不变，更新时替换同名文件并重新部署。</p>
+        <form class="ask-form content-form" data-content-form>
+          <label>
+            类型
+            <select name="type">
+              <option value="note">笔记 note</option>
+              <option value="resource">资源 resource</option>
+              <option value="program">项目 program</option>
+              <option value="article">文章 article</option>
+            </select>
+          </label>
+          <label>标题<input type="text" name="title" required></label>
+          <label>说明<textarea name="description" rows="4" placeholder="可以写长期连载中、项目简介等"></textarea></label>
+          <label>链接<input type="url" name="url" placeholder="PDF 链接 / 项目链接 / 文章链接"></label>
+          <label>标签<input type="text" name="label" placeholder="PDF / Program / Resource / 友链分类"></label>
+          <label>
+            状态
+            <select name="status">
+              <option value="visible">立即展示</option>
+              <option value="draft">草稿，不展示</option>
+            </select>
+          </label>
+          <button class="button primary" type="submit">保存条目</button>
+          <p class="form-status" role="status" aria-live="polite"></p>
+        </form>
+        <div class="admin-list content-admin-list" data-content-list></div>
+      </section>
+
+      <section class="section admin-section admin-view" data-admin-view="friends" hidden>
+        <h2>友链管理</h2>
+        <p class="aside-text">管理友链跳转、头像和简介。头像可以填完整图片链接，也可以填站内路径，例如 assets/avatar.jpg。</p>
+        <form class="ask-form friend-form" data-friend-form>
+          <label>站点名<input type="text" name="title" placeholder="例如 XingHuiSama" required></label>
+          <label>链接<input type="url" name="url" placeholder="https://example.com" required></label>
+          <label>头像<input type="text" name="label" placeholder="https://... 或 assets/..."></label>
+          <label>简介<textarea name="description" rows="4" placeholder="写一句这个站点的介绍"></textarea></label>
+          <label>
+            状态
+            <select name="status">
+              <option value="visible">立即展示</option>
+              <option value="draft">草稿，不展示</option>
+            </select>
+          </label>
+          <button class="button primary" type="submit">添加友链</button>
+          <p class="form-status" role="status" aria-live="polite"></p>
+        </form>
+        <div class="admin-list friends-admin-list" data-friends-list></div>
+      </section>
+
+      <section class="section admin-section admin-view" data-admin-view="moments" hidden>
+        <h2>说说发布</h2>
+        <p class="aside-text">像发动态一样写一条短记录。图片和背景图先填写链接或站内 assets 路径；等后续接入存储后可以换成上传。</p>
+        <form class="ask-form moment-form" data-moment-form>
+          <label>
+            发布身份
+            <select name="authorName">
+              <option value="Galois37的猫猫">Galois37的猫猫</option>
+              <option value="Galois37">Galois37</option>
+            </select>
+          </label>
+          <label>想说的话<textarea name="content" rows="6" placeholder="今天想记录些什么？" required></textarea></label>
+          <label>插入图片<textarea name="imageUrl" rows="4" placeholder="每行一张图片，例如：&#10;assets/images/moment-01.jpg&#10;assets/images/moment-02.jpg"></textarea></label>
+          <label>名片背景图<input type="text" name="backgroundUrl" placeholder="https://... 或 assets/..."></label>
+          <label>
+            状态
+            <select name="status">
+              <option value="visible">立即展示</option>
+              <option value="draft">草稿，不展示</option>
+            </select>
+          </label>
+          <button class="button primary" type="submit">发布说说</button>
+          <p class="form-status" role="status" aria-live="polite"></p>
+        </form>
+        <div class="admin-list moments-admin-list" data-moments-list></div>
+      </section>
+
+      <section class="section admin-section admin-view" data-admin-view="messages" hidden>
+        <h2>提问箱管理</h2>
+        <p class="aside-text">访客提问默认不会公开。登录用户的提问可以回复为“只显示给提问者”，所有提问都可以选择“公开展示”。</p>
+        <div class="admin-list" data-admin-list></div>
+      </section>
+
+      <section class="section admin-section admin-view" data-admin-view="comments" hidden>
+        <h2>评论区管理</h2>
+        <p class="aside-text">这里之后会管理讨论区评论。目前可以查看和删除已经保存的评论。</p>
+        <div class="admin-list" data-comments-list></div>
+      </section>
+    </section>
+  </main>
+
+  <script src="admin.js?v=20260604-friends"></script>
+</body>
+</html>

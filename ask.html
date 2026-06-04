@@ -1,0 +1,103 @@
+﻿<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>提问箱 | Galois37の完美算术教室</title>
+  <meta name="description" content="Galois37 的提问箱和讨论区。">
+  <link rel="stylesheet" href="styles.css?v=20260603-moments-admin">
+</head>
+<body data-page="ask">
+  <header class="site-header" id="top">
+    <a class="brand" href="index.html" aria-label="回到首页">
+      <span class="brand-mark"><img src="assets/avatar.jpg" alt=""></span>
+      <span>Galois37の完美算术教室</span>
+    </a>
+    <button class="nav-toggle" type="button" aria-label="打开导航" aria-expanded="false" aria-controls="site-nav">
+      <span></span><span></span><span></span>
+    </button>
+    <nav class="site-nav" id="site-nav" aria-label="主导航">
+      <a href="index.html" data-nav="home">首页</a>
+      <a href="about.html" data-nav="about">自我介绍</a>
+      <a href="notes.html" data-nav="notes">笔记</a>
+      <a href="articles.html" data-nav="articles">Articles&Programs</a>
+      <a href="ask.html" data-nav="ask">提问箱</a>
+      <a class="nav-extra" href="archive.html" data-nav="archive">归档</a>
+      <a class="nav-extra" href="moments.html" data-nav="moments">说说</a>
+      <a class="nav-extra" href="friends.html" data-nav="friends">友链</a>
+    </nav>
+    <button class="theme-toggle" type="button" data-theme-toggle aria-label="切换白天模式和黑夜模式" title="切换主题">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v2M12 19v2M5.64 5.64l1.42 1.42M16.95 16.95l1.41 1.41M3 12h2M19 12h2M5.64 18.36l1.42-1.42M16.95 7.05l1.41-1.41"/><circle cx="12" cy="12" r="4"/></svg>
+    </button>
+  </header>
+
+  <main class="page-main">
+    <section class="page-hero">
+      <p class="eyebrow">Ask Box</p>
+      <h1>提问箱与讨论区</h1>
+      <p>无需登录即可提问，站长会筛选一部分问题公开。<br>登录可开启私人回复功能，同时可以体验后续开发的一些玩法<br>——那就，战个未来吧！</p>
+    </section>
+
+    <section class="section ask-layout">
+      <div class="ask-stack">
+        <section class="glass-card account-card" data-account-panel>
+          <div data-guest-panel>
+            <h2>访客账号</h2>
+            <p>不登录也能提问；登录后可以收到只给你的私人回复。</p>
+            <div class="auth-tabs" aria-label="登录或注册">
+              <button class="is-active" type="button" data-auth-mode-button="login">登录</button>
+              <button type="button" data-auth-mode-button="register">注册</button>
+            </div>
+            <form class="account-form" data-user-form data-auth-mode="login">
+              <label>账号<input type="text" name="username" autocomplete="username" placeholder="小写字母 / 数字 / 下划线"></label>
+              <label data-register-only hidden>昵称<input type="text" name="displayName" placeholder="注册时填写"></label>
+              <label>密码<input type="password" name="password" autocomplete="current-password" placeholder="至少 6 位"></label>
+              <p class="aside-text" data-auth-note>登录只需要填写账号和密码；注册时再填写昵称。</p>
+              <button class="button primary" type="submit" data-auth-submit>登录</button>
+              <p class="form-status" role="status" aria-live="polite"></p>
+            </form>
+          </div>
+          <div data-user-panel hidden>
+            <h2>已登录</h2>
+            <p>当前昵称：<strong data-current-user></strong></p>
+            <button class="button secondary" type="button" data-logout>退出登录</button>
+          </div>
+        </section>
+
+        <form class="ask-form" data-message-form>
+          <label>
+            想说的话
+            <textarea name="message" rows="6" placeholder="写下问题、建议或想看的内容"></textarea>
+          </label>
+          <button class="button primary" type="submit">发送提问</button>
+          <p class="form-status" role="status" aria-live="polite"></p>
+        </form>
+      </div>
+
+      <aside class="glass-card discussion-preview">
+        <h2>公开问答</h2>
+        <p>这里会显示已经回答并选择公开的问题。</p>
+        <div class="public-qa-list" data-public-messages>
+          <article>
+            <strong>加载中...</strong>
+            <p>正在读取公开问答。</p>
+          </article>
+        </div>
+        <div class="private-qa-section" data-private-section hidden>
+          <h2>我的私人回复</h2>
+          <p>只有你登录后才能看到绑定到自己账号的私人回复。</p>
+          <div class="public-qa-list" data-private-messages></div>
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p>© 2026 Galois37.</p>
+    <a href="#top">回到顶部</a>
+  </footer>
+
+  <script src="script.js?v=20260603-moments-admin"></script>
+</body>
+</html>
+
