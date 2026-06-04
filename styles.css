@@ -2,8 +2,8 @@
   --ink: #f2f6ff;
   --muted: #b5bed3;
   --paper: #111525;
-  --panel: rgba(31, 36, 58, 0.78);
-  --panel-strong: rgba(37, 43, 68, 0.92);
+  --panel: rgba(18, 24, 45, 0.3);
+  --panel-strong: rgba(23, 29, 52, 0.42);
   --line: rgba(255, 255, 255, 0.14);
   --pink: #ff6fae;
   --cyan: #32c7d9;
@@ -25,8 +25,8 @@ html[data-theme="light"] {
   --ink: #202536;
   --muted: #667085;
   --paper: #f8f5fb;
-  --panel: rgba(255, 255, 255, 0.74);
-  --panel-strong: rgba(255, 255, 255, 0.9);
+  --panel: rgba(255, 255, 255, 0.58);
+  --panel-strong: rgba(255, 255, 255, 0.68);
   --line: rgba(60, 64, 90, 0.16);
   --shadow: 0 24px 70px rgba(92, 91, 116, 0.18);
   --body-bg:
@@ -40,6 +40,8 @@ html[data-theme="light"] {
 }
 
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
+
 html {
   scroll-behavior: smooth;
   background: #080b16;
@@ -73,7 +75,7 @@ body::before {
   background-size: cover;
   background-position: center;
   background-attachment: fixed;
-  animation: siteBgCycle 30s step-end infinite;
+  animation: siteBgCycle 60s step-end infinite;
 }
 
 body::after {
@@ -849,9 +851,14 @@ body:not([data-page="home"]) .section {
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
 }
 
+.ask-layout {
+  align-items: start;
+}
+
 .ask-stack {
   display: grid;
   gap: 18px;
+  align-self: start;
 }
 
 .account-card {
@@ -1277,6 +1284,26 @@ select {
 
 .discussion-preview {
   align-content: start;
+  max-height: min(720px, calc(100svh - 156px));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-color: rgba(124, 211, 255, 0.55) rgba(255, 255, 255, 0.08);
+}
+
+.discussion-preview::-webkit-scrollbar {
+  width: 10px;
+}
+
+.discussion-preview::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background: rgba(124, 211, 255, 0.5);
+  background-clip: content-box;
+}
+
+.discussion-preview::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 999px;
 }
 
 .discussion-preview article {
@@ -1499,7 +1526,7 @@ body[data-page="home"] .site-footer {
   background-size: cover;
   background-position: center;
   transform: scale(1.04);
-  animation: homeBgFade 24s infinite;
+  animation: homeBgFade 48s infinite;
 }
 
 .home-bg-one {
@@ -1508,12 +1535,12 @@ body[data-page="home"] .site-footer {
 
 .home-bg-two {
   background-image: url("assets/home-bg-2.jpg");
-  animation-delay: 8s;
+  animation-delay: 16s;
 }
 
 .home-bg-three {
   background-image: url("assets/home-bg-3.jpg");
-  animation-delay: 16s;
+  animation-delay: 32s;
 }
 
 .home-stage-shade {
@@ -1808,10 +1835,10 @@ body[data-page="home"] .site-footer {
 .home-project-grid {
   display: grid;
   grid-template-columns: minmax(245px, 0.92fr) minmax(300px, 1.34fr) minmax(205px, 0.74fr);
-  grid-template-rows: 190px 190px;
+  grid-template-rows: 230px 180px;
   grid-template-areas:
-    "note ask ask"
-    "note about mbti";
+    "ask note note"
+    "ask about mbti";
   gap: 18px;
 }
 
@@ -1830,11 +1857,12 @@ body[data-page="home"] .site-footer {
 
 .home-project-card.project-note {
   grid-area: note;
-  min-height: 398px;
+  min-height: 230px;
 }
 
 .home-project-card.project-ask {
   grid-area: ask;
+  min-height: 428px;
 }
 
 .home-project-card.project-about {
@@ -1907,6 +1935,14 @@ body[data-page="home"] .site-footer {
 .project-about { --project-bg: url("assets/about-bg.png"); }
 .project-mbti { --project-bg: url("assets/room-articles.jpg"); }
 
+.project-note::before {
+  background-position: center 42%;
+}
+
+.project-ask::before {
+  background-position: center 58%;
+}
+
 @media (max-width: 900px) {
   .site-header {
     gap: 10px;
@@ -1967,6 +2003,11 @@ body[data-page="home"] .site-footer {
   .mini-grid,
   .friend-grid {
     grid-template-columns: 1fr;
+  }
+
+  .discussion-preview {
+    max-height: none;
+    overflow: visible;
   }
 
   .home-hero {
@@ -2091,7 +2132,11 @@ body[data-page="home"] .site-footer {
 
   .home-stage {
     min-height: auto;
-    padding: 92px 14px 34px;
+    padding: 88px 10px 32px;
+  }
+
+  .home-stage-inner {
+    width: 100%;
   }
 
   .home-title-block {
@@ -2099,22 +2144,22 @@ body[data-page="home"] .site-footer {
   }
 
   .home-title-block h1 {
-    font-size: clamp(2.35rem, 14vw, 4rem);
+    font-size: clamp(2rem, 12vw, 3.2rem);
   }
 
   .home-persona-head {
-    grid-template-columns: 86px minmax(0, 1fr);
-    gap: 14px;
+    grid-template-columns: 72px minmax(0, 1fr);
+    gap: 12px;
   }
 
   .home-persona-head .avatar-shell {
-    width: 86px;
-    height: 86px;
-    border-radius: 18px;
+    width: 72px;
+    height: 72px;
+    border-radius: 16px;
   }
 
   .home-persona-head h2 {
-    font-size: clamp(2rem, 12vw, 3.2rem);
+    font-size: clamp(1.8rem, 10vw, 2.55rem);
   }
 
   .home-persona-head p:last-child {
@@ -2123,6 +2168,20 @@ body[data-page="home"] .site-footer {
 
   .home-persona-card .icon-links {
     justify-content: center;
+    gap: 8px;
+  }
+
+  .home-persona-card .icon-links a {
+    width: 48px;
+    height: 48px;
+  }
+
+  .home-persona-card .profile-stats {
+    gap: 4px;
+  }
+
+  .home-persona-card .profile-stats strong {
+    font-size: clamp(1.15rem, 7vw, 1.55rem);
   }
 
   .home-persona-card .profile-cta {
@@ -2130,12 +2189,21 @@ body[data-page="home"] .site-footer {
   }
 
   .music-placeholder {
-    min-height: 280px;
+    grid-template-columns: 1fr;
+    justify-items: center;
+    text-align: center;
+    min-height: auto;
+    padding: 20px 16px;
   }
 
   .music-disc {
-    width: 150px;
+    grid-row: auto;
+    width: 86px;
     opacity: 0.46;
+  }
+
+  .music-bars {
+    justify-content: center;
   }
 
   .home-section-head {
@@ -2156,6 +2224,7 @@ body[data-page="home"] .site-footer {
     grid-column: auto;
     grid-row: auto;
     min-height: 176px;
+    padding: 16px;
   }
 
   .hero-profile {
