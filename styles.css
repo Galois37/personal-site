@@ -79,17 +79,18 @@ body::before {
 body::after {
   z-index: -2;
   background-image:
-    radial-gradient(circle at 7% 82%, rgba(173, 255, 218, 0.95) 0 2px, transparent 4px),
-    radial-gradient(circle at 16% 28%, rgba(173, 255, 218, 0.9) 0 2px, transparent 4px),
-    radial-gradient(circle at 48% 12%, rgba(173, 255, 218, 0.86) 0 2px, transparent 5px),
-    radial-gradient(circle at 70% 26%, rgba(173, 255, 218, 0.84) 0 2px, transparent 4px),
-    radial-gradient(circle at 91% 56%, rgba(173, 255, 218, 0.8) 0 2px, transparent 5px),
-    radial-gradient(circle at 20% 74%, rgba(124, 211, 255, 0.62) 0 1px, transparent 3px),
-    radial-gradient(circle at 84% 82%, rgba(255, 182, 216, 0.56) 0 1px, transparent 3px);
-  background-size: 100% 100%;
-  filter: drop-shadow(0 0 12px rgba(173, 255, 218, 0.9));
-  opacity: 0.9;
-  animation: particleDrift 9s ease-in-out infinite alternate;
+    radial-gradient(circle at 18px 28px, rgba(180, 255, 229, 0.95) 0 2px, transparent 5px),
+    radial-gradient(circle at 96px 74px, rgba(180, 255, 229, 0.72) 0 1px, transparent 4px),
+    radial-gradient(circle at 146px 132px, rgba(124, 211, 255, 0.7) 0 1px, transparent 4px),
+    radial-gradient(circle at 48px 152px, rgba(255, 182, 216, 0.62) 0 1px, transparent 4px),
+    radial-gradient(circle at 210px 42px, rgba(180, 255, 229, 0.78) 0 2px, transparent 5px),
+    radial-gradient(circle at 280px 180px, rgba(255, 214, 107, 0.44) 0 1px, transparent 4px);
+  background-size: 320px 240px, 260px 210px, 360px 260px, 300px 250px, 420px 300px, 520px 360px;
+  background-position: 0 0, 40px 30px, 90px -20px, -30px 80px, 120px 60px, -80px -40px;
+  background-repeat: repeat;
+  filter: drop-shadow(0 0 14px rgba(173, 255, 218, 0.95));
+  opacity: 0.98;
+  animation: particleDrift 8s ease-in-out infinite alternate;
 }
 
 @keyframes particleDrift {
@@ -262,10 +263,21 @@ body[data-page="friends"] .site-nav a[data-nav="friends"] {
 }
 
 .home-hero,
-.page-main,
 .section {
-  width: min(1120px, calc(100% - 36px));
+  width: min(1180px, calc(100% - clamp(48px, 18vw, 360px)));
   margin: 0 auto;
+}
+
+body:not([data-page="home"]) main {
+  position: relative;
+  z-index: 1;
+}
+
+body:not([data-page="home"]) .page-hero,
+body:not([data-page="home"]) .section {
+  width: min(1180px, calc(100% - clamp(48px, 18vw, 360px)));
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .home-hero {
@@ -1315,7 +1327,7 @@ select {
 }
 
 .admin-shell {
-  width: min(1120px, calc(100% - 36px));
+  width: min(1180px, calc(100% - clamp(48px, 18vw, 360px)));
   margin: 0 auto;
   padding: clamp(48px, 8vw, 92px) 0;
 }
@@ -1467,7 +1479,7 @@ body[data-page="home"] .site-footer {
   min-height: 100svh;
   overflow: hidden;
   isolation: isolate;
-  padding: clamp(92px, 7vw, 112px) 18px clamp(42px, 6vw, 76px);
+  padding: clamp(92px, 7vw, 112px) 0 clamp(42px, 6vw, 76px);
 }
 
 .home-bg-slider,
@@ -1551,12 +1563,12 @@ body[data-page="home"] .site-footer {
 }
 
 .home-stage-inner {
-  width: min(1500px, 100%);
+  width: min(1180px, calc(100% - clamp(48px, 18vw, 360px)));
   margin: 0 auto;
 }
 
 .home-title-block {
-  max-width: 1280px;
+  max-width: 1180px;
   margin-bottom: clamp(18px, 3vw, 28px);
   color: #fff;
   text-shadow: 0 18px 60px rgba(0, 0, 0, 0.5);
@@ -1576,7 +1588,7 @@ body[data-page="home"] .site-footer {
 
 .home-dashboard {
   display: grid;
-  grid-template-columns: minmax(460px, 1.12fr) minmax(340px, 0.88fr);
+  grid-template-columns: minmax(420px, 1.08fr) minmax(320px, 0.92fr);
   gap: clamp(18px, 2.5vw, 26px);
   align-items: stretch;
 }
@@ -1795,7 +1807,7 @@ body[data-page="home"] .site-footer {
 
 .home-project-grid {
   display: grid;
-  grid-template-columns: minmax(260px, 0.94fr) minmax(320px, 1.36fr) minmax(220px, 0.74fr);
+  grid-template-columns: minmax(245px, 0.92fr) minmax(300px, 1.34fr) minmax(205px, 0.74fr);
   grid-template-rows: 190px 190px;
   grid-template-areas:
     "note ask ask"
@@ -2067,8 +2079,13 @@ body[data-page="home"] .site-footer {
   }
 
   .home-hero,
-  .page-main,
   .section {
+    width: min(100% - 28px, 1120px);
+  }
+
+  body:not([data-page="home"]) .page-hero,
+  body:not([data-page="home"]) .section,
+  .admin-shell {
     width: min(100% - 28px, 1120px);
   }
 
