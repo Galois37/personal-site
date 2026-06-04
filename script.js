@@ -1,6 +1,7 @@
 const navToggle = document.querySelector(".nav-toggle");
 const siteNav = document.querySelector(".site-nav");
 const themeToggle = document.querySelector("[data-theme-toggle]");
+const musicPlayerRoot = document.querySelector("[data-music-player]");
 const messageForm = document.querySelector("[data-message-form], [data-static-form]");
 const publicMessages = document.querySelector("[data-public-messages]");
 const privateMessages = document.querySelector("[data-private-messages]");
@@ -535,6 +536,175 @@ themeToggle?.addEventListener("click", () => {
   localStorage.setItem(themeKey, nextTheme);
   applyTheme(nextTheme);
 });
+
+function createDemoToneUrl() {
+  const sampleRate = 44100;
+  const duration = 10;
+  const channels = 1;
+  const bytesPerSample = 2;
+  const sampleCount = sampleRate * duration;
+  const buffer = new ArrayBuffer(44 + sampleCount * bytesPerSample);
+  const view = new DataView(buffer);
+  const writeString = (offset, value) => {
+    for (let i = 0; i < value.length; i += 1) view.setUint8(offset + i, value.charCodeAt(i));
+  };
+  writeString(0, "RIFF");
+  view.setUint32(4, 36 + sampleCount * bytesPerSample, true);
+  writeString(8, "WAVE");
+  writeString(12, "fmt ");
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true);
+  view.setUint16(22, channels, true);
+  view.setUint32(24, sampleRate, true);
+  view.setUint32(28, sampleRate * channels * bytesPerSample, true);
+  view.setUint16(32, channels * bytesPerSample, true);
+  view.setUint16(34, 16, true);
+  writeString(36, "data");
+  view.setUint32(40, sampleCount * bytesPerSample, true);
+
+  for (let i = 0; i < sampleCount; i += 1) {
+    const t = i / sampleRate;
+    const note = Math.floor(t * 2) % 4;
+    const freq = [392, 523.25, 659.25, 784][note];
+    const envelope = Math.min(1, t * 4) * Math.min(1, (duration - t) * 2);
+    const wave = Math.sin(2 * Math.PI * freq * t) * 0.22 * envelope;
+    view.setInt16(44 + i * bytesPerSample, Math.max(-1, Math.min(1, wave)) * 32767, true);
+  }
+
+  return URL.createObjectURL(new Blob([buffer], { type: "audio/wav" }));
+}
+
+function initSimpleMusicPlayer() {
+  if (!musicPlayerRoot) return;
+
+  const demoUrl = createDemoToneUrl();
+  const playlist = window.GALOIS37_MUSIC_PLAYLIST || [
+    {
+      title: "夜の向日葵",
+      artist: "松本文紀",
+      cover: "assets/music/yoru-no-himawari-cover.jpg",
+      src: "assets/music/yoru-no-himawari.mp3",
+      lyrics: []
+    }
+  ];
+
+  const audio = new Audio();
+  audio.preload = "metadata";
+  let currentIndex = 0;
+
+  const cover = musicPlayerRoot.querySelector("[data-music-cover]");
+  const title = musicPlayerRoot.querySelector("[data-music-title]");
+  const artist = musicPlayerRoot.querySelector("[data-music-artist]");
+  const lyric = musicPlayerRoot.querySelector("[data-music-lyric]");
+  const current = musicPlayerRoot.querySelector("[data-music-current]");
+  const duration = musicPlayerRoot.querySelector("[data-music-duration]");
+  const progress = musicPlayerRoot.querySelector("[data-music-progress]");
+  const toggle = musicPlayerRoot.querySelector("[data-music-toggle]");
+  const icon = musicPlayerRoot.querySelector("[data-music-icon]");
+  const prev = musicPlayerRoot.querySelector("[data-music-prev]");
+  const next = musicPlayerRoot.querySelector("[data-music-next]");
+
+  const formatTime = (seconds) => {
+    if (!Number.isFinite(seconds) || seconds <= 0) return "00:00";
+    const mins = Math.floor(seconds / 60).toString().padStart(2, "0");
+    const secs = Math.floor(seconds % 60).toString().padStart(2, "0");
+    return `${mins}:${secs}`;
+  };
+
+  const activeLyric = (song) => {
+    if (!song.lyrics?.length) return song.note || "";
+    const item = [...song.lyrics].reverse().find((line) => audio.currentTime >= line.time);
+    return item?.text || song.lyrics[0].text;
+  };
+
+  const setLyric = (value) => {
+    if (!lyric) return;
+    const text = String(value || "").trim();
+    lyric.textContent = text;
+    lyric.hidden = !text;
+  };
+
+  const renderSong = () => {
+    const song = playlist[currentIndex];
+    if (!song) return;
+    title.textContent = song.title || "未命名音轨";
+    artist.textContent = song.artist || "未知作者";
+    setLyric(song.lyrics?.[0]?.text || song.note || "");
+    if (cover) cover.src = song.cover || "assets/avatar.jpg";
+    audio.src = song.src || demoUrl;
+    audio.load();
+    progress.value = "0";
+    current.textContent = "00:00";
+    duration.textContent = "00:00";
+  };
+
+  const updatePlayingState = () => {
+    const isPlaying = !audio.paused;
+    musicPlayerRoot.classList.toggle("is-playing", isPlaying);
+    icon.textContent = isPlaying ? "Ⅱ" : "▶";
+  };
+
+  const playCurrent = async () => {
+    try {
+      await audio.play();
+      updatePlayingState();
+    } catch {
+      setLyric("浏览器阻止了播放，请再点一次播放按钮。");
+      updatePlayingState();
+    }
+  };
+
+  toggle?.addEventListener("click", () => {
+    if (audio.paused) playCurrent();
+    else {
+      audio.pause();
+      updatePlayingState();
+    }
+  });
+
+  prev?.addEventListener("click", () => {
+    currentIndex = (currentIndex - 1 + playlist.length) % playlist.length;
+    renderSong();
+    playCurrent();
+  });
+
+  next?.addEventListener("click", () => {
+    currentIndex = (currentIndex + 1) % playlist.length;
+    renderSong();
+    playCurrent();
+  });
+
+  progress?.addEventListener("input", () => {
+    if (!audio.duration) return;
+    audio.currentTime = (Number(progress.value) / 100) * audio.duration;
+  });
+
+  audio.addEventListener("loadedmetadata", () => {
+    duration.textContent = formatTime(audio.duration);
+  });
+
+  audio.addEventListener("timeupdate", () => {
+    current.textContent = formatTime(audio.currentTime);
+    duration.textContent = formatTime(audio.duration);
+    progress.value = audio.duration ? String((audio.currentTime / audio.duration) * 100) : "0";
+    setLyric(activeLyric(playlist[currentIndex]));
+  });
+
+  audio.addEventListener("ended", () => {
+    currentIndex = (currentIndex + 1) % playlist.length;
+    renderSong();
+    playCurrent();
+  });
+
+  audio.addEventListener("error", () => {
+    setLyric("音频路径读取失败，请检查 assets/music/ 中的文件名。");
+    updatePlayingState();
+  });
+
+  renderSong();
+}
+
+initSimpleMusicPlayer();
 
 authModeButtons.forEach((button) => {
   button.addEventListener("click", () => setAuthMode(button.dataset.authModeButton));
