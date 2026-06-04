@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Galois37の完美算术教室</title>
   <meta name="description" content="Galois37 的个人主页，记录笔记、项目、文章杂谈和提问箱。">
-  <link rel="stylesheet" href="styles.css?v=20260603-moments-admin">
+  <link rel="stylesheet" href="styles.css?v=20260604-home-visual-1">
 </head>
 <body data-page="home">
   <header class="site-header" id="top">
@@ -18,9 +18,9 @@
     </button>
     <nav class="site-nav" id="site-nav" aria-label="主导航">
       <a href="index.html" data-nav="home">首页</a>
-      <a href="about.html" data-nav="about">自我介绍</a>
+      <a href="about.html" data-nav="about">关于</a>
       <a href="notes.html" data-nav="notes">笔记</a>
-      <a href="articles.html" data-nav="articles">Articles&Programs</a>
+      <a href="articles.html" data-nav="articles">项目</a>
       <a href="ask.html" data-nav="ask">提问箱</a>
       <a class="nav-extra" href="archive.html" data-nav="archive">归档</a>
       <a class="nav-extra" href="moments.html" data-nav="moments">说说</a>
@@ -31,127 +31,94 @@
     </button>
   </header>
 
-  <main>
-    <section class="home-hero" aria-labelledby="home-title">
-      <article class="profile-card hero-profile" aria-label="Galois37 的个人名片">
-        <div class="profile-head">
-          <a class="avatar-shell" href="about.html" aria-label="查看 Galois37 的自我介绍">
-            <img src="assets/avatar.jpg" alt="Galois37 的头像">
-          </a>
-          <div class="profile-text">
-            <p class="eyebrow">Personal Card</p>
-            <h1 id="home-title">Galois37</h1>
-            <p class="profile-line">欢迎来到Galois37の完美教室</p>
+  <main class="home-main">
+    <section class="home-stage" aria-labelledby="home-title">
+      <div class="home-bg-slider" aria-hidden="true">
+        <span class="home-bg-slide home-bg-one"></span>
+        <span class="home-bg-slide home-bg-two"></span>
+        <span class="home-bg-slide home-bg-three"></span>
+      </div>
+      <div class="home-stage-shade" aria-hidden="true"></div>
+
+      <div class="home-stage-inner">
+        <div class="home-title-block">
+          <p class="eyebrow">Galois37's Room</p>
+          <h1 id="home-title">Galois37の完美算术教室</h1>
+        </div>
+
+        <div class="home-dashboard">
+          <article class="profile-card home-persona-card" aria-label="Galois37 的个人名片">
+            <div class="home-card-topline">
+              <span></span><span></span><span></span>
+            </div>
+            <div class="home-persona-head">
+              <a class="avatar-shell" href="about.html" aria-label="查看 Galois37 的关于页面">
+                <img src="assets/avatar.jpg" alt="Galois37 的头像">
+              </a>
+              <div>
+                <p class="eyebrow">Personal Card</p>
+                <h2>Galois37</h2>
+                <p>数学、幻想、meta 与地球 online 的临时据点。</p>
+              </div>
+            </div>
+            <div class="profile-stats" aria-label="站点内容统计">
+              <a href="notes.html" aria-label="查看笔记"><strong data-stat-count="notes">--</strong>Notes</a>
+              <a href="articles.html" aria-label="查看项目"><strong data-stat-count="works">--</strong>Projects</a>
+              <a href="ask.html" aria-label="进入提问箱"><strong data-stat-count="asks">--</strong>Ask Box</a>
+            </div>
+            <div class="icon-links" aria-label="社交链接">
+              <a class="app-link github-link" href="https://github.com/Galois37" target="_blank" rel="noreferrer" aria-label="GitHub 主页">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2C6.48 2 2 6.58 2 12.26c0 4.52 2.86 8.35 6.83 9.71.5.1.68-.22.68-.49 0-.24-.01-.88-.01-1.73-2.78.62-3.37-1.37-3.37-1.37-.45-1.19-1.11-1.51-1.11-1.51-.91-.64.07-.63.07-.63 1 .07 1.53 1.06 1.53 1.06.9 1.57 2.36 1.12 2.94.86.09-.67.35-1.12.64-1.38-2.22-.26-4.56-1.14-4.56-5.07 0-1.12.39-2.04 1.03-2.76-.1-.26-.45-1.31.1-2.72 0 0 .84-.28 2.75 1.05A9.27 9.27 0 0 1 12 6.94c.85 0 1.71.12 2.51.34 1.91-1.33 2.75-1.05 2.75-1.05.55 1.41.2 2.46.1 2.72.64.72 1.03 1.64 1.03 2.76 0 3.94-2.34 4.8-4.57 5.06.36.32.68.95.68 1.92 0 1.38-.01 2.49-.01 2.83 0 .27.18.59.69.49A10.16 10.16 0 0 0 22 12.26C22 6.58 17.52 2 12 2Z"/></svg>
+              </a>
+              <a class="app-link zhihu-link" href="https://www.zhihu.com/people/riemann-85-53" target="_blank" rel="noreferrer" aria-label="知乎主页"><span class="brand-glyph">知乎</span></a>
+              <a class="app-link xhs-link" href="https://xhslink.com/m/2OqSgZDfYsQ" target="_blank" rel="noreferrer" aria-label="小红书主页"><span class="brand-glyph xhs-glyph">小红书</span></a>
+              <a class="app-link mail-link" href="mailto:2707752781@qq.com" aria-label="QQ 邮箱">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Zm0 3.2V17h16V8.2l-8 5.3-8-5.3Zm1.2-1.2L12 11.5 18.8 7H5.2Z"/></svg>
+              </a>
+              <a class="app-link qq-link" href="tencent://message/?uin=2707752781&Site=Galois37&Menu=yes" aria-label="QQ 联系">
+                <svg class="qq-badge" viewBox="0 0 64 64" aria-hidden="true"><path class="qq-body" d="M32 8.5c8 0 13.2 7.2 13.2 18 0 4.4 2.5 8.4 5.1 12.1 1.2 1.7.3 3.1-1.7 2.7l-4.4-.9c.8 3.3 1.2 6.2-.5 7.3-1.5 1-4.3-.5-6.6-2.2-1.6.6-3.3.9-5.1.9s-3.5-.3-5.1-.9c-2.3 1.7-5.1 3.2-6.6 2.2-1.7-1.1-1.3-4-.5-7.3l-4.4.9c-2 .4-2.9-1-1.7-2.7 2.6-3.7 5.1-7.7 5.1-12.1 0-10.8 5.2-18 13.2-18Z"></path></svg>
+              </a>
+            </div>
             <a class="know-more profile-cta" href="about.html">Know more about me</a>
+          </article>
+
+          <aside class="music-placeholder" aria-label="音乐播放器占位">
+            <div class="music-disc" aria-hidden="true"></div>
+            <p class="eyebrow">Music Player</p>
+            <h2>播放器施工中</h2>
+            <p>这里先预留给之后的音乐播放器，未来可以接入歌单、封面和播放控制。</p>
+            <div class="music-bars" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>
+          </aside>
+        </div>
+
+        <section class="home-projects" aria-labelledby="home-projects-title">
+          <div class="home-section-head">
+            <p class="eyebrow">Featured Rooms</p>
+            <h2 id="home-projects-title">主要入口</h2>
           </div>
-        </div>
-        <div class="profile-stats" aria-label="站点内容统计">
-          <a href="notes.html" aria-label="查看笔记">
-            <strong data-stat-count="notes">--</strong>Notes
-          </a>
-          <a href="articles.html" aria-label="查看文章和项目">
-            <strong data-stat-count="works">--</strong><em>Articles&amp;<br>Programs</em>
-          </a>
-          <a href="ask.html" aria-label="进入提问箱">
-            <strong data-stat-count="asks">--</strong>Ask Box
-          </a>
-        </div>
-        <div class="icon-links" aria-label="社交链接">
-          <a class="app-link github-link" href="https://github.com/Galois37" target="_blank" rel="noreferrer" aria-label="GitHub 主页">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2C6.48 2 2 6.58 2 12.26c0 4.52 2.86 8.35 6.83 9.71.5.1.68-.22.68-.49 0-.24-.01-.88-.01-1.73-2.78.62-3.37-1.37-3.37-1.37-.45-1.19-1.11-1.51-1.11-1.51-.91-.64.07-.63.07-.63 1 .07 1.53 1.06 1.53 1.06.9 1.57 2.36 1.12 2.94.86.09-.67.35-1.12.64-1.38-2.22-.26-4.56-1.14-4.56-5.07 0-1.12.39-2.04 1.03-2.76-.1-.26-.45-1.31.1-2.72 0 0 .84-.28 2.75 1.05A9.27 9.27 0 0 1 12 6.94c.85 0 1.71.12 2.51.34 1.91-1.33 2.75-1.05 2.75-1.05.55 1.41.2 2.46.1 2.72.64.72 1.03 1.64 1.03 2.76 0 3.94-2.34 4.8-4.57 5.06.36.32.68.95.68 1.92 0 1.38-.01 2.49-.01 2.83 0 .27.18.59.69.49A10.16 10.16 0 0 0 22 12.26C22 6.58 17.52 2 12 2Z"/></svg>
-          </a>
-          <a class="app-link zhihu-link" href="https://www.zhihu.com/people/riemann-85-53" target="_blank" rel="noreferrer" aria-label="知乎主页">
-            <span class="brand-glyph">知乎</span>
-          </a>
-          <a class="app-link xhs-link" href="https://xhslink.com/m/2OqSgZDfYsQ" target="_blank" rel="noreferrer" aria-label="小红书主页">
-            <span class="brand-glyph xhs-glyph">小红书</span>
-          </a>
-          <a class="app-link mail-link" href="mailto:2707752781@qq.com" aria-label="QQ 邮箱">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Zm0 3.2V17h16V8.2l-8 5.3-8-5.3Zm1.2-1.2L12 11.5 18.8 7H5.2Z"/></svg>
-          </a>
-          <a class="app-link qq-link" href="tencent://message/?uin=2707752781&Site=Galois37&Menu=yes" aria-label="QQ 联系">
-            <svg class="qq-badge" viewBox="0 0 64 64" aria-hidden="true">
-              <path class="qq-body" d="M32 8.5c8 0 13.2 7.2 13.2 18 0 4.4 2.5 8.4 5.1 12.1 1.2 1.7.3 3.1-1.7 2.7l-4.4-.9c.8 3.3 1.2 6.2-.5 7.3-1.5 1-4.3-.5-6.6-2.2-1.6.6-3.3.9-5.1.9s-3.5-.3-5.1-.9c-2.3 1.7-5.1 3.2-6.6 2.2-1.7-1.1-1.3-4-.5-7.3l-4.4.9c-2 .4-2.9-1-1.7-2.7 2.6-3.7 5.1-7.7 5.1-12.1 0-10.8 5.2-18 13.2-18Z"></path>
-            </svg>
-          </a>
-        </div>
-      </article>
-    </section>
-
-    <section class="section" aria-labelledby="social-title">
-      <div class="section-title">
-        <p class="eyebrow">Links</p>
-        <h2 id="social-title">社交平台</h2>
-      </div>
-      <div class="social-grid">
-        <a class="social-card" href="https://www.zhihu.com/people/riemann-85-53" target="_blank" rel="noreferrer">
-          <span>知乎</span>
-          <strong>Galois37</strong>
-        </a>
-        <a class="social-card" href="https://xhslink.com/m/2OqSgZDfYsQ" target="_blank" rel="noreferrer">
-          <span>小红书</span>
-          <strong>Galois37</strong>
-        </a>
-        <a class="social-card" href="tencent://message/?uin=2707752781&Site=Galois37&Menu=yes">
-          <span>QQ</span>
-          <strong>2707752781</strong>
-        </a>
-        <a class="social-card" href="mailto:2707752781@qq.com">
-          <span>QQ 邮箱</span>
-          <strong>2707752781@qq.com</strong>
-        </a>
-        <a class="social-card" href="https://github.com/Galois37" target="_blank" rel="noreferrer">
-          <span>GitHub</span>
-          <strong>Galois37</strong>
-        </a>
-      </div>
-    </section>
-
-    <section class="section" aria-labelledby="overview-title">
-      <div class="section-title">
-        <p class="eyebrow">Rooms</p>
-        <h2 id="overview-title">主要空间</h2>
-      </div>
-      <div class="card-grid">
-        <article class="glass-card feature-card room-card notes-room">
-          <span class="tag">Notes</span>
-          <h3>37的数学笔记</h3>
-          <a href="notes.html">进入笔记</a>
-        </article>
-        <article class="glass-card feature-card room-card articles-room">
-          <span class="tag">Articles&Programs</span>
-          <h3>数学之外のmeta</h3>
-          <a href="articles.html">进入页面</a>
-        </article>
-        <article class="glass-card feature-card room-card ask-room">
-          <span class="tag">Ask</span>
-          <h3>提问箱与讨论区</h3>
-          <a href="ask.html">查看入口</a>
-        </article>
-      </div>
-    </section>
-
-    <section class="section" aria-labelledby="site-extras-title">
-      <div class="section-title">
-        <p class="eyebrow">Personal Site</p>
-        <h2 id="site-extras-title">站点角落</h2>
-      </div>
-      <div class="mini-grid">
-        <a class="glass-card mini-card" href="archive.html">
-          <span class="tag">Archive</span>
-          <h3>归档</h3>
-          <p>按时间整理公开笔记、项目、文章和说说。</p>
-        </a>
-        <a class="glass-card mini-card" href="moments.html">
-          <span class="tag">Moments</span>
-          <h3>说说</h3>
-          <p>短动态、碎碎念和一些不太正式的记录。</p>
-        </a>
-        <a class="glass-card mini-card" href="friends.html">
-          <span class="tag">Friends</span>
-          <h3>友链</h3>
-          <p>放朋友的网站和想长期保留的个人站链接。</p>
-        </a>
+          <div class="home-project-grid">
+            <a class="home-project-card project-note" href="assets/notes/p-adic-to-tate-thesis.pdf" target="_blank" rel="noreferrer">
+              <span>Note</span>
+              <strong>从 p 进数到 Tate Thesis</strong>
+              <em>长期连载中的数学笔记</em>
+            </a>
+            <a class="home-project-card project-ask" href="ask.html">
+              <span>Ask</span>
+              <strong>Ask me anything</strong>
+              <em>提问箱与公开问答入口</em>
+            </a>
+            <a class="home-project-card project-about" href="about.html">
+              <span>About</span>
+              <strong>About me</strong>
+              <em>关于 Galois37 的自我介绍</em>
+            </a>
+            <a class="home-project-card project-mbti" href="https://galois37.github.io/math.mbti-test/" target="_blank" rel="noreferrer">
+              <span>Program</span>
+              <strong>数学 MBTI 测试</strong>
+              <em>测试数学人格类型的小项目</em>
+            </a>
+          </div>
+        </section>
       </div>
     </section>
   </main>
@@ -161,7 +128,6 @@
     <a href="#top">回到顶部</a>
   </footer>
 
-  <script src="script.js?v=20260603-moments-admin"></script>
+  <script src="script.js?v=20260604-home-visual-1"></script>
 </body>
 </html>
-

@@ -166,7 +166,8 @@ function applySettings(settings) {
   const siteName = data["site.name"];
   setText(".brand span:last-child", siteName);
   if (document.body.dataset.page === "home") document.title = siteName;
-  setText("#home-title", data["home.nickname"]);
+  setText("#home-title", siteName);
+  setText(".home-persona-head h2", data["home.nickname"]);
   setText(".profile-line", data["home.subtitle"]);
   setText(".about-hero p:not(.eyebrow)", data["about.quote"]);
   renderRichText(document.querySelector("[data-about-bio]"), data["about.bio"]);
