@@ -75,3 +75,30 @@ https://github.com/Galois37/personal-site/actions
 https://personal-site-8d0.pages.dev
 https://galois37.top
 ```
+
+## 5. 控制台一键部署
+
+控制台的“一键部署”按钮用于触发 GitHub Actions 重新部署当前仓库版本。它适合在已经把文件推到 GitHub 后，手动重跑一次线上发布。
+
+注意：这个按钮不能直接读取你电脑里的新 PDF 或图片。如果你更新了本地静态文件，仍然需要先运行：
+
+```text
+deploy.bat
+```
+
+然后再用控制台按钮重跑部署。
+
+要启用控制台按钮，需要在 Cloudflare Pages 的环境变量中添加：
+
+```text
+GITHUB_DEPLOY_TOKEN
+```
+
+这个 token 需要有触发 GitHub Actions workflow 的权限。可选环境变量：
+
+```text
+GITHUB_DEPLOY_OWNER=Galois37
+GITHUB_DEPLOY_REPO=personal-site
+GITHUB_DEPLOY_WORKFLOW=deploy.yml
+GITHUB_DEPLOY_BRANCH=main
+```

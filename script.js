@@ -57,6 +57,13 @@ function imageUrlWithVersion(url, version) {
   return `${normalized}${normalized.includes("?") ? "&" : "?"}v=${cacheKey}`;
 }
 
+function assetUrlWithVersion(url, version) {
+  const normalized = String(url || "").trim().replace(/\\/g, "/");
+  if (!normalized || normalized === "#") return normalized || "#";
+  if (/^(https?:|mailto:|tencent:)/i.test(normalized)) return normalized;
+  return imageUrlWithVersion(normalized, version);
+}
+
 function applyTheme(theme) {
   const nextTheme = theme === "light" ? "light" : "dark";
   document.documentElement.dataset.theme = nextTheme;
@@ -207,7 +214,7 @@ function renderContentItem(item, pageType) {
   const label = escapeHtml(item.label || (item.type === "note" ? "PDF" : "Program"));
   const title = escapeHtml(item.title || "");
   const description = escapeHtml(item.description || "");
-  const url = escapeHtml(item.url || "#");
+  const url = escapeHtml(assetUrlWithVersion(item.url || "#", item.updated_at || item.id));
   const linkText = item.type === "note" ? "打开 PDF" : "打开链接";
   if (pageType === "notes") {
     return `

@@ -13,6 +13,8 @@ const momentsList = document.querySelector("[data-moments-list]");
 const themeToggle = document.querySelector("[data-theme-toggle]");
 const adminTabs = document.querySelectorAll("[data-admin-tab]");
 const adminViews = document.querySelectorAll("[data-admin-view]");
+const deployButton = document.querySelector("[data-deploy-button]");
+const deployStatus = document.querySelector("[data-deploy-status]");
 
 const tokenStoreKey = "galois37_admin_token";
 const userTokenKey = "galois37_user_token";
@@ -584,6 +586,21 @@ contentForm?.addEventListener("submit", async (event) => {
     await loadContentItems();
   } catch (error) {
     setStatus(contentForm, error.message);
+  }
+});
+
+deployButton?.addEventListener("click", async () => {
+  deployButton.disabled = true;
+  if (deployStatus) deployStatus.textContent = "正在触发 GitHub Actions 部署...";
+  try {
+    const result = await api("/api/deploy", { method: "POST", body: JSON.stringify({}) });
+    if (deployStatus) {
+      deployStatus.innerHTML = `已触发部署。<a href="${escapeHtml(result.actionsUrl)}" target="_blank" rel="noreferrer">查看 Actions</a>`;
+    }
+  } catch (error) {
+    if (deployStatus) deployStatus.textContent = error.message;
+  } finally {
+    deployButton.disabled = false;
   }
 });
 
