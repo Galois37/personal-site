@@ -8,59 +8,21 @@ GitHub Actions 自动运行 Wrangler
 部署到现有 Cloudflare Pages 项目 personal-site
 ```
 
-## 1. 创建 GitHub 仓库
+## 1. 当前状态
 
-在 GitHub 创建一个空仓库，例如：
+仓库已经创建：
 
 ```text
 https://github.com/Galois37/personal-site
 ```
 
-不要勾选自动创建 README，因为本地已经有文件。
-
-## 2. 首次推送
-
-在本文件所在目录打开终端：
-
-```powershell
-cd C:\Users\11624\Documents\Codex\2026-06-02\cloudflare-codex-cloudflare-pages-github-1\outputs\personal-site
-git init
-git branch -M main
-git remote add origin https://github.com/Galois37/personal-site.git
-git add .
-git commit -m "Initial site"
-git push -u origin main
-```
-
-如果 GitHub 要求登录，按浏览器提示完成登录即可。
-
-## 3. 配置 GitHub Secrets
-
-进入 GitHub 仓库：
+GitHub Actions 已经配置为部署到现有 Cloudflare Pages 项目：
 
 ```text
-Settings -> Secrets and variables -> Actions -> New repository secret
+personal-site
 ```
 
-添加两个 secret：
-
-```text
-CLOUDFLARE_ACCOUNT_ID
-868ef9c9e2a6279240373e1d38dc507e
-```
-
-```text
-CLOUDFLARE_API_TOKEN
-你的 Cloudflare API Token
-```
-
-Cloudflare API Token 建议使用自定义 Token，至少允许编辑 Cloudflare Pages。创建位置：
-
-```text
-Cloudflare Dashboard -> My Profile -> API Tokens -> Create Token
-```
-
-## 4. 以后如何一键部署图片
+## 2. 以后如何一键部署图片
 
 把图片放进：
 
@@ -83,14 +45,13 @@ deploy.bat
 脚本会自动：
 
 ```text
-git add .
-git commit
-git push
+读取本机 GitHub 登录凭据
+把当前网站目录上传到 GitHub
+触发 GitHub Actions
+部署到 Cloudflare Pages
 ```
 
-GitHub 收到 push 后，会自动执行 `.github/workflows/deploy.yml`，并部署到 Cloudflare Pages。
-
-## 5. 说说里如何引用图片
+## 3. 说说里如何引用图片
 
 部署完成后，在控制台的说说图片输入框里填写：
 
@@ -99,3 +60,18 @@ assets/moment-04.jpg
 ```
 
 多张图片每行一张。
+
+## 4. 如果要手动查看部署
+
+GitHub Actions 页面：
+
+```text
+https://github.com/Galois37/personal-site/actions
+```
+
+线上地址：
+
+```text
+https://personal-site-8d0.pages.dev
+https://galois37.top
+```
