@@ -102,3 +102,32 @@ GITHUB_DEPLOY_REPO=personal-site
 GITHUB_DEPLOY_WORKFLOW=deploy.yml
 GITHUB_DEPLOY_BRANCH=main
 ```
+
+## 6. PDF 更新失败排查
+
+更新笔记 PDF 后，推荐直接运行根目录的：
+
+```text
+deploy.bat
+```
+
+新版部署脚本会先把文件推到 GitHub，然后等待 GitHub Actions 和 Cloudflare Pages 的部署结果。
+
+如果脚本或 GitHub Actions 日志里出现：
+
+```text
+Authentication error
+Invalid access token
+```
+
+这说明 PDF 文件本身没有问题，而是 GitHub 仓库 Secret 里的 `CLOUDFLARE_API_TOKEN` 已失效或权限不够。处理方式：
+
+```text
+1. 在 Cloudflare 创建新的 API Token
+2. 给它 Cloudflare Pages 部署所需权限
+3. 到 GitHub 仓库 Settings -> Secrets and variables -> Actions
+4. 替换同名 Secret: CLOUDFLARE_API_TOKEN
+5. 重新运行失败的 GitHub Actions，或再次运行 deploy.bat
+```
+
+当前 workflow 会固定使用 `wrangler@4.98.0`，避免每次部署自动拉最新版 Wrangler 带来额外变化。

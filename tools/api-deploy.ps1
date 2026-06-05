@@ -1,5 +1,6 @@
 param(
-  [string]$Message
+  [string]$Message,
+  [switch]$NoWait
 )
 
 $ErrorActionPreference = "Stop"
@@ -58,6 +59,90 @@ function Invoke-GitHubApi {
   }
 
   return Invoke-RestMethod @params
+}
+
+function Get-WorkflowRunForCommit {
+  param([string]$CommitSha)
+
+  $encodedSha = [uri]::EscapeDataString($CommitSha)
+  $runs = Invoke-GitHubApi -Method "Get" -Path "/repos/$Owner/$Repo/actions/runs?head_sha=$encodedSha&per_page=10"
+  return @($runs.workflow_runs | Where-Object { $_.head_sha -eq $CommitSha } | Sort-Object created_at -Descending | Select-Object -First 1)
+}
+
+function Show-WorkflowFailureSummary {
+  param($Run)
+
+  Write-Host ""
+  Write-Host "Deployment failed in GitHub Actions." -ForegroundColor Red
+  Write-Host "Run: $($Run.html_url)"
+
+  $logZip = Join-Path $env:TEMP "galois37-actions-$($Run.id).zip"
+  $logDir = Join-Path $env:TEMP "galois37-actions-$($Run.id)"
+
+  try {
+    Remove-Item -LiteralPath $logDir -Recurse -Force -ErrorAction SilentlyContinue
+    Invoke-WebRequest -Uri "https://api.github.com/repos/$Owner/$Repo/actions/runs/$($Run.id)/logs" -Headers $Headers -OutFile $logZip | Out-Null
+    Expand-Archive -LiteralPath $logZip -DestinationPath $logDir -Force
+
+    $matches = @(Get-ChildItem -LiteralPath $logDir -Recurse -File |
+      Select-String -Pattern "ERROR|Error|Failed|failed|Authentication error|Invalid access token|Missing GitHub secret|Process completed with exit code" -Encoding utf8 -Context 1,3)
+
+    if ($matches.Count -gt 0) {
+      Write-Host ""
+      Write-Host "Key log lines:" -ForegroundColor Yellow
+      $matches | Select-Object -Last 12 | ForEach-Object {
+        Write-Host ($_.ToString())
+      }
+    }
+
+    $allText = (Get-ChildItem -LiteralPath $logDir -Recurse -File | Get-Content -Encoding utf8 -Raw) -join "`n"
+    if ($allText -match "Invalid access token|Authentication error") {
+      Write-Host ""
+      Write-Host "Likely fix:" -ForegroundColor Yellow
+      Write-Host "GitHub secret CLOUDFLARE_API_TOKEN is invalid or expired."
+      Write-Host "Create a fresh Cloudflare API token with Pages edit permission, then replace the GitHub repository secret named CLOUDFLARE_API_TOKEN."
+    }
+  } catch {
+    Write-Host "Could not download workflow logs: $($_.Exception.Message)" -ForegroundColor Yellow
+  }
+}
+
+function Wait-GitHubDeployment {
+  param([string]$CommitSha)
+
+  Write-Host ""
+  Write-Host "Waiting for GitHub Actions deployment..."
+
+  $run = $null
+  for ($i = 1; $i -le 30; $i++) {
+    $run = Get-WorkflowRunForCommit -CommitSha $CommitSha
+    if ($run) {
+      break
+    }
+    Start-Sleep -Seconds 4
+  }
+
+  if (!$run) {
+    Write-Host "No GitHub Actions run appeared yet. Check manually: https://github.com/$Owner/$Repo/actions" -ForegroundColor Yellow
+    return
+  }
+
+  Write-Host "Run: $($run.html_url)"
+  while ($run.status -ne "completed") {
+    Write-Host ("Status: {0}..." -f $run.status)
+    Start-Sleep -Seconds 8
+    $run = Invoke-GitHubApi -Method "Get" -Path "/repos/$Owner/$Repo/actions/runs/$($run.id)"
+  }
+
+  if ($run.conclusion -eq "success") {
+    Write-Host ""
+    Write-Host "Cloudflare Pages deployment succeeded." -ForegroundColor Green
+    Write-Host "Site: https://galois37.top"
+    return
+  }
+
+  Show-WorkflowFailureSummary -Run $run
+  throw "GitHub Actions deployment failed."
 }
 
 function Get-RelativeSitePath {
@@ -142,3 +227,7 @@ Invoke-GitHubApi -Method "Patch" -Path "/repos/$Owner/$Repo/git/refs/heads/$Bran
 Write-Host ""
 Write-Host "Pushed to GitHub: https://github.com/$Owner/$Repo/commit/$($commit.sha)"
 Write-Host "GitHub Actions will deploy to Cloudflare Pages: https://github.com/$Owner/$Repo/actions"
+
+if (-not $NoWait) {
+  Wait-GitHubDeployment -CommitSha $commit.sha
+}
