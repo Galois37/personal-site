@@ -3,6 +3,7 @@ const settingsForm = document.querySelector("[data-settings-form]");
 const contentForm = document.querySelector("[data-content-form]");
 const friendForm = document.querySelector("[data-friend-form]");
 const momentForm = document.querySelector("[data-moment-form]");
+const musicForm = document.querySelector("[data-music-form]");
 const loginPanel = document.querySelector("[data-admin-login]");
 const dashboard = document.querySelector("[data-admin-dashboard]");
 const adminList = document.querySelector("[data-admin-list]");
@@ -10,6 +11,7 @@ const commentsList = document.querySelector("[data-comments-list]");
 const contentList = document.querySelector("[data-content-list]");
 const friendsList = document.querySelector("[data-friends-list]");
 const momentsList = document.querySelector("[data-moments-list]");
+const musicList = document.querySelector("[data-music-list-admin]");
 const themeToggle = document.querySelector("[data-theme-toggle]");
 const adminTabs = document.querySelectorAll("[data-admin-tab]");
 const adminViews = document.querySelectorAll("[data-admin-view]");
@@ -19,6 +21,18 @@ const deployStatus = document.querySelector("[data-deploy-status]");
 const tokenStoreKey = "galois37_admin_token";
 const userTokenKey = "galois37_user_token";
 const themeKey = "galois37_theme";
+
+const defaultMusicPlaylist = [
+  {
+    id: "yoru-no-himawari",
+    title: "夜の向日葵",
+    artist: "松本文紀",
+    cover: "assets/music/yoru-no-himawari-cover.jpg",
+    src: "assets/music/yoru-no-himawari.mp3",
+    note: "纯音乐 无歌词",
+    status: "visible"
+  }
+];
 
 const defaultSettings = {
   "site.name": "Galois37の完美算术教室",
@@ -52,7 +66,10 @@ nku 数院大一在读，也是成分复杂的地球 online 玩家。
   "rooms.notesTitle": "37的数学笔记",
   "rooms.articlesTitle": "数学之外のmeta",
   "rooms.askTitle": "提问箱与讨论区",
+  "music.playlist": JSON.stringify(defaultMusicPlaylist, null, 2),
 };
+
+let currentSettings = { ...defaultSettings };
 
 function setStatus(form, text) {
   const status = form?.querySelector(".form-status");
@@ -129,7 +146,128 @@ function fillSettingsForm(settings) {
 
 async function loadSettings() {
   const result = await api("/api/settings");
-  fillSettingsForm(result.settings || {});
+  currentSettings = { ...defaultSettings, ...(result.settings || {}) };
+  fillSettingsForm(currentSettings);
+  renderMusicItems(parseMusicPlaylist(currentSettings["music.playlist"]));
+}
+
+function parseMusicPlaylist(value) {
+  let items = value;
+  if (typeof value === "string") {
+    try {
+      items = JSON.parse(value);
+    } catch {
+      items = [];
+    }
+  }
+  if (!Array.isArray(items)) items = [];
+  const normalized = items.map((item, index) => ({
+    id: String(item.id || `track-${Date.now()}-${index}`),
+    title: String(item.title || "未命名音轨"),
+    artist: String(item.artist || "未知作者"),
+    cover: String(item.cover || "assets/avatar.jpg").replace(/\\/g, "/"),
+    src: String(item.src || "").replace(/\\/g, "/"),
+    note: String(item.note || ""),
+    status: String(item.status || "visible"),
+  }));
+  return normalized.length ? normalized : defaultMusicPlaylist;
+}
+
+async function saveMusicPlaylist(items) {
+  currentSettings["music.playlist"] = JSON.stringify(items, null, 2);
+  await api("/api/settings", {
+    method: "POST",
+    body: JSON.stringify({ settings: { "music.playlist": currentSettings["music.playlist"] } }),
+  });
+  renderMusicItems(items);
+}
+
+function renderMusicItems(items) {
+  if (!musicList) return;
+  if (!items.length) {
+    musicList.innerHTML = `<article class="glass-card admin-row"><strong>暂无音乐</strong><p>可以先添加一首歌曲。</p></article>`;
+    return;
+  }
+
+  musicList.innerHTML = items.map((item, index) => `
+    <article class="glass-card admin-row music-edit-row" data-music-index="${index}">
+      <div class="admin-row-head">
+        <div>
+          <img class="admin-friend-avatar" src="${escapeHtml(imageUrlWithVersion(item.cover || "assets/avatar.jpg", item.id))}" alt="" loading="lazy">
+          <strong>${escapeHtml(item.title || "未命名音轨")}</strong>
+          <span class="admin-pill">${escapeHtml(item.artist || "未知作者")}</span>
+          <span class="admin-pill">${escapeHtml(item.status || "visible")}</span>
+        </div>
+        <time>#${index + 1}</time>
+      </div>
+      <label>歌曲标题<input type="text" name="title" value="${escapeHtml(item.title || "")}"></label>
+      <label>作者 / 艺术家<input type="text" name="artist" value="${escapeHtml(item.artist || "")}"></label>
+      <label>音频路径<input type="text" name="src" value="${escapeHtml(item.src || "")}" placeholder="assets/music/song.mp3 或 https://..."></label>
+      <label>封面路径<input type="text" name="cover" value="${escapeHtml(item.cover || "")}" placeholder="assets/music/cover.jpg 或 https://..."></label>
+      <label>备注 / 歌词提示<textarea name="note" rows="3" placeholder="纯音乐可以写：纯音乐 无歌词">${escapeHtml(item.note || "")}</textarea></label>
+      <label>
+        状态
+        <select name="status">
+          <option value="visible">加入歌单</option>
+          <option value="draft">暂不展示</option>
+        </select>
+      </label>
+      <div class="admin-actions">
+        <button class="button primary" type="button" data-save-music>保存音乐</button>
+        <button class="button secondary" type="button" data-move-music="-1">上移</button>
+        <button class="button secondary" type="button" data-move-music="1">下移</button>
+        <button class="button danger" type="button" data-delete-music>删除音乐</button>
+        <p class="form-status" role="status" aria-live="polite"></p>
+      </div>
+    </article>
+  `).join("");
+
+  musicList.querySelectorAll(".music-edit-row").forEach((row) => {
+    const index = Number(row.dataset.musicIndex);
+    const status = row.querySelector('[name="status"]');
+    status.value = items[index]?.status || "visible";
+
+    row.querySelector("[data-save-music]").addEventListener("click", async () => {
+      const button = row.querySelector("[data-save-music]");
+      const statusText = row.querySelector(".form-status");
+      const nextItems = [...items];
+      const updated = { ...nextItems[index] };
+      row.querySelectorAll("[name]").forEach((field) => {
+        updated[field.name] = field.value;
+      });
+      updated.src = updated.src.replace(/\\/g, "/");
+      updated.cover = updated.cover.replace(/\\/g, "/");
+      nextItems[index] = updated;
+
+      button.disabled = true;
+      statusText.textContent = "正在保存...";
+      try {
+        await saveMusicPlaylist(nextItems);
+      } catch (error) {
+        statusText.textContent = error.message;
+      } finally {
+        button.disabled = false;
+      }
+    });
+
+    row.querySelectorAll("[data-move-music]").forEach((button) => {
+      button.addEventListener("click", async () => {
+        const direction = Number(button.dataset.moveMusic);
+        const targetIndex = index + direction;
+        if (targetIndex < 0 || targetIndex >= items.length) return;
+        const nextItems = [...items];
+        [nextItems[index], nextItems[targetIndex]] = [nextItems[targetIndex], nextItems[index]];
+        await saveMusicPlaylist(nextItems);
+      });
+    });
+
+    row.querySelector("[data-delete-music]").addEventListener("click", async () => {
+      const title = items[index]?.title || "这首歌";
+      if (!confirm(`确定删除「${title}」吗？`)) return;
+      const nextItems = items.filter((_, itemIndex) => itemIndex !== index);
+      await saveMusicPlaylist(nextItems);
+    });
+  });
 }
 
 function renderContentItems(items) {
@@ -632,6 +770,34 @@ momentForm?.addEventListener("submit", async (event) => {
     await loadMoments();
   } catch (error) {
     setStatus(momentForm, error.message);
+  }
+});
+
+musicForm?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const payload = Object.fromEntries(new FormData(musicForm).entries());
+  const items = parseMusicPlaylist(currentSettings["music.playlist"]);
+  const nextItem = {
+    id: `track-${Date.now()}`,
+    title: payload.title || "未命名音轨",
+    artist: payload.artist || "未知作者",
+    src: String(payload.src || "").replace(/\\/g, "/"),
+    cover: String(payload.cover || "assets/avatar.jpg").replace(/\\/g, "/"),
+    note: payload.note || "",
+    status: payload.status || "visible",
+  };
+
+  if (!nextItem.src.trim()) {
+    setStatus(musicForm, "请填写音频路径。");
+    return;
+  }
+
+  try {
+    await saveMusicPlaylist([...items, nextItem]);
+    setStatus(musicForm, "音乐已加入歌单。");
+    musicForm.reset();
+  } catch (error) {
+    setStatus(musicForm, error.message);
   }
 });
 

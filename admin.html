@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>控制台 | Galois37の完美算术教室</title>
   <meta name="description" content="Galois37 网站控制台。">
-  <link rel="stylesheet" href="styles.css?v=20260607-stats-footer-2">
+  <link rel="stylesheet" href="styles.css?v=20260607-music-playlist-1">
 </head>
 <body data-page="admin">
   <main class="admin-shell">
@@ -38,6 +38,7 @@
         <button type="button" data-admin-tab="content">内容</button>
         <button type="button" data-admin-tab="friends">友链</button>
         <button type="button" data-admin-tab="moments">说说</button>
+        <button type="button" data-admin-tab="music">音乐</button>
         <button type="button" data-admin-tab="messages">提问</button>
         <button type="button" data-admin-tab="comments">评论</button>
       </nav>
@@ -170,6 +171,28 @@
         <div class="admin-list moments-admin-list" data-moments-list></div>
       </section>
 
+      <section class="section admin-section admin-view" data-admin-view="music" hidden>
+        <h2>音乐管理</h2>
+        <p class="aside-text">这里管理首页播放器和独立音乐页共用的歌单。音频与封面可以填写站内路径，例如 assets/music/song.mp3，也可以填写外链。</p>
+        <form class="ask-form music-form" data-music-form>
+          <label>歌曲标题<input type="text" name="title" placeholder="夜の向日葵" required></label>
+          <label>作者 / 艺术家<input type="text" name="artist" placeholder="松本文紀"></label>
+          <label>音频路径<input type="text" name="src" placeholder="assets/music/yoru-no-himawari.mp3" required></label>
+          <label>封面路径<input type="text" name="cover" placeholder="assets/music/yoru-no-himawari-cover.jpg"></label>
+          <label>备注 / 歌词提示<textarea name="note" rows="3" placeholder="纯音乐可以写：纯音乐 无歌词"></textarea></label>
+          <label>
+            状态
+            <select name="status">
+              <option value="visible">加入歌单</option>
+              <option value="draft">暂不展示</option>
+            </select>
+          </label>
+          <button class="button primary" type="submit">添加音乐</button>
+          <p class="form-status" role="status" aria-live="polite"></p>
+        </form>
+        <div class="admin-list music-admin-list" data-music-list-admin></div>
+      </section>
+
       <section class="section admin-section admin-view" data-admin-view="messages" hidden>
         <h2>提问箱管理</h2>
         <p class="aside-text">访客提问默认不会公开。登录用户的提问可以回复为“只显示给提问者”，所有提问都可以选择“公开展示”。</p>
@@ -184,8 +207,10 @@
     </section>
   </main>
 
-  <script src="admin.js?v=20260607-stats-footer-2"></script>
+  <script src="admin.js?v=20260607-music-playlist-1"></script>
 </body>
 </html>
+
+
 
 

@@ -1,7 +1,8 @@
 const navToggle = document.querySelector(".nav-toggle");
 const siteNav = document.querySelector(".site-nav");
 const themeToggle = document.querySelector("[data-theme-toggle]");
-const musicPlayerRoot = document.querySelector("[data-music-player]");
+const musicPlayerRoots = document.querySelectorAll("[data-music-player]");
+const musicListBoard = document.querySelector("[data-music-list]");
 const messageForm = document.querySelector("[data-message-form], [data-static-form]");
 const publicMessages = document.querySelector("[data-public-messages]");
 const privateMessages = document.querySelector("[data-private-messages]");
@@ -25,6 +26,18 @@ const themeKey = "galois37_theme";
 let currentUser = null;
 const ownerDisplayName = "Galois37的猫猫";
 
+const defaultMusicPlaylist = [
+  {
+    id: "yoru-no-himawari",
+    title: "夜の向日葵",
+    artist: "松本文紀",
+    cover: "assets/music/yoru-no-himawari-cover.jpg",
+    src: "assets/music/yoru-no-himawari.mp3",
+    note: "纯音乐 无歌词",
+    status: "visible"
+  }
+];
+
 const defaultSettings = {
   "site.name": "Galois37の完美算术教室",
   "site.onlineSince": "2026-06-02T00:00:00+08:00",
@@ -41,6 +54,7 @@ const defaultSettings = {
   "rooms.notesTitle": "37的数学笔记",
   "rooms.articlesTitle": "数学之外のmeta",
   "rooms.askTitle": "提问箱与讨论区",
+  "music.playlist": JSON.stringify(defaultMusicPlaylist, null, 2),
 };
 
 let runtimeConfig = {
@@ -48,6 +62,8 @@ let runtimeConfig = {
   baseVisitors: Number(defaultSettings["stats.baseVisitors"]) || 0,
   baseViews: Number(defaultSettings["stats.baseViews"]) || 0,
 };
+let activeMusicPlaylist = defaultMusicPlaylist;
+let musicControllers = [];
 
 function escapeHtml(value) {
   return String(value ?? "").replace(/[&<>"']/g, (char) => ({
@@ -174,6 +190,70 @@ function configureRuntime(data) {
   updateRuntimeClock();
 }
 
+function normalizeMusicPlaylist(value) {
+  let items = value;
+  if (typeof value === "string") {
+    try {
+      items = JSON.parse(value);
+    } catch {
+      items = [];
+    }
+  }
+  if (!Array.isArray(items)) items = [];
+
+  const normalized = items
+    .map((item, index) => ({
+      id: String(item.id || `track-${index + 1}`),
+      title: String(item.title || "未命名音轨").trim(),
+      artist: String(item.artist || "未知作者").trim(),
+      cover: String(item.cover || "assets/avatar.jpg").trim().replace(/\\/g, "/"),
+      src: String(item.src || "").trim().replace(/\\/g, "/"),
+      note: String(item.note || "").trim(),
+      status: String(item.status || "visible").trim(),
+    }))
+    .filter((item) => item.src && item.status !== "draft");
+
+  return normalized.length ? normalized : defaultMusicPlaylist;
+}
+
+function syncMusicSelection(index) {
+  document.querySelectorAll("[data-music-select]").forEach((button) => {
+    const isActive = Number(button.dataset.musicSelect) === index;
+    button.classList.toggle("is-active", isActive);
+    button.setAttribute("aria-pressed", String(isActive));
+  });
+}
+
+function renderMusicTrackList() {
+  if (!musicListBoard) return;
+  musicListBoard.innerHTML = activeMusicPlaylist.map((track, index) => `
+    <button class="music-track-card ${index === 0 ? "is-active" : ""}" type="button" data-music-select="${index}" aria-pressed="${index === 0 ? "true" : "false"}">
+      <span class="music-track-cover"><img src="${escapeHtml(track.cover || "assets/avatar.jpg")}" alt="" loading="lazy"></span>
+      <span class="music-track-body">
+        <strong>${escapeHtml(track.title)}</strong>
+        <span>${escapeHtml(track.artist)}</span>
+        <em>${escapeHtml(track.note || "点击切换到这首歌")}</em>
+      </span>
+    </button>
+  `).join("");
+
+  musicListBoard.querySelectorAll("[data-music-select]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const index = Number(button.dataset.musicSelect) || 0;
+      const pagePlayer = [...musicPlayerRoots].findIndex((root) => root.classList.contains("music-player-large"));
+      const controller = musicControllers[pagePlayer >= 0 ? pagePlayer : 0];
+      controller?.playIndex(index, true);
+    });
+  });
+}
+
+function configureMusicPlaylist(value) {
+  activeMusicPlaylist = normalizeMusicPlaylist(value);
+  musicControllers.forEach((controller) => controller.setPlaylist(activeMusicPlaylist));
+  renderMusicTrackList();
+  syncMusicSelection(0);
+}
+
 function padTime(value) {
   return String(value).padStart(2, "0");
 }
@@ -223,6 +303,7 @@ function renderRichText(target, value) {
 function applySettings(settings) {
   const data = { ...defaultSettings, ...settings };
   configureRuntime(data);
+  configureMusicPlaylist(data["music.playlist"]);
   const siteName = data["site.name"];
   setText(".brand span:last-child", siteName);
   if (document.body.dataset.page === "home") document.title = siteName;
@@ -641,47 +722,32 @@ function createDemoToneUrl() {
   return URL.createObjectURL(new Blob([buffer], { type: "audio/wav" }));
 }
 
-function initSimpleMusicPlayer() {
-  if (!musicPlayerRoot) return;
-
+function createMusicPlayer(root) {
   const demoUrl = createDemoToneUrl();
-  const playlist = window.GALOIS37_MUSIC_PLAYLIST || [
-    {
-      title: "夜の向日葵",
-      artist: "松本文紀",
-      cover: "assets/music/yoru-no-himawari-cover.jpg",
-      src: "assets/music/yoru-no-himawari.mp3",
-      lyrics: []
-    }
-  ];
-
   const audio = new Audio();
   audio.preload = "metadata";
+  let playlist = activeMusicPlaylist;
   let currentIndex = 0;
+  let shouldContinue = false;
 
-  const cover = musicPlayerRoot.querySelector("[data-music-cover]");
-  const title = musicPlayerRoot.querySelector("[data-music-title]");
-  const artist = musicPlayerRoot.querySelector("[data-music-artist]");
-  const lyric = musicPlayerRoot.querySelector("[data-music-lyric]");
-  const current = musicPlayerRoot.querySelector("[data-music-current]");
-  const duration = musicPlayerRoot.querySelector("[data-music-duration]");
-  const progress = musicPlayerRoot.querySelector("[data-music-progress]");
-  const toggle = musicPlayerRoot.querySelector("[data-music-toggle]");
-  const icon = musicPlayerRoot.querySelector("[data-music-icon]");
-  const prev = musicPlayerRoot.querySelector("[data-music-prev]");
-  const next = musicPlayerRoot.querySelector("[data-music-next]");
+  const cover = root.querySelector("[data-music-cover]");
+  const title = root.querySelector("[data-music-title]");
+  const artist = root.querySelector("[data-music-artist]");
+  const lyric = root.querySelector("[data-music-lyric]");
+  const current = root.querySelector("[data-music-current]");
+  const duration = root.querySelector("[data-music-duration]");
+  const progress = root.querySelector("[data-music-progress]");
+  const toggle = root.querySelector("[data-music-toggle]");
+  const icon = root.querySelector("[data-music-icon]");
+  const prev = root.querySelector("[data-music-prev]");
+  const next = root.querySelector("[data-music-next]");
+  const counter = root.querySelector("[data-music-counter]");
 
   const formatTime = (seconds) => {
     if (!Number.isFinite(seconds) || seconds <= 0) return "00:00";
     const mins = Math.floor(seconds / 60).toString().padStart(2, "0");
     const secs = Math.floor(seconds % 60).toString().padStart(2, "0");
     return `${mins}:${secs}`;
-  };
-
-  const activeLyric = (song) => {
-    if (!song.lyrics?.length) return song.note || "";
-    const item = [...song.lyrics].reverse().find((line) => audio.currentTime >= line.time);
-    return item?.text || song.lyrics[0].text;
   };
 
   const setLyric = (value) => {
@@ -691,27 +757,29 @@ function initSimpleMusicPlayer() {
     lyric.hidden = !text;
   };
 
+  const updatePlayingState = () => {
+    const isPlaying = !audio.paused;
+    root.classList.toggle("is-playing", isPlaying);
+    if (icon) icon.textContent = isPlaying ? "Ⅱ" : "▶";
+  };
+
   const renderSong = () => {
-    const song = playlist[currentIndex];
-    if (!song) return;
-    title.textContent = song.title || "未命名音轨";
-    artist.textContent = song.artist || "未知作者";
-    setLyric(song.lyrics?.[0]?.text || song.note || "");
+    const song = playlist[currentIndex] || defaultMusicPlaylist[0];
+    if (title) title.textContent = song.title || "未命名音轨";
+    if (artist) artist.textContent = song.artist || "未知作者";
+    setLyric(song.note || "");
     if (cover) cover.src = song.cover || "assets/avatar.jpg";
     audio.src = song.src || demoUrl;
     audio.load();
-    progress.value = "0";
-    current.textContent = "00:00";
-    duration.textContent = "00:00";
-  };
-
-  const updatePlayingState = () => {
-    const isPlaying = !audio.paused;
-    musicPlayerRoot.classList.toggle("is-playing", isPlaying);
-    icon.textContent = isPlaying ? "Ⅱ" : "▶";
+    if (progress) progress.value = "0";
+    if (current) current.textContent = "00:00";
+    if (duration) duration.textContent = "00:00";
+    if (counter) counter.textContent = `${currentIndex + 1} / ${playlist.length}`;
+    syncMusicSelection(currentIndex);
   };
 
   const playCurrent = async () => {
+    shouldContinue = true;
     try {
       await audio.play();
       updatePlayingState();
@@ -721,25 +789,35 @@ function initSimpleMusicPlayer() {
     }
   };
 
+  const pauseCurrent = () => {
+    shouldContinue = false;
+    audio.pause();
+    updatePlayingState();
+  };
+
+  const playIndex = (index, autoplay = false) => {
+    const nextIndex = Number(index);
+    currentIndex = Number.isFinite(nextIndex)
+      ? (nextIndex + playlist.length) % playlist.length
+      : 0;
+    renderSong();
+    if (autoplay || shouldContinue) playCurrent();
+    else updatePlayingState();
+  };
+
+  const setPlaylist = (items) => {
+    playlist = normalizeMusicPlaylist(items);
+    currentIndex = Math.min(currentIndex, playlist.length - 1);
+    renderSong();
+  };
+
   toggle?.addEventListener("click", () => {
     if (audio.paused) playCurrent();
-    else {
-      audio.pause();
-      updatePlayingState();
-    }
+    else pauseCurrent();
   });
 
-  prev?.addEventListener("click", () => {
-    currentIndex = (currentIndex - 1 + playlist.length) % playlist.length;
-    renderSong();
-    playCurrent();
-  });
-
-  next?.addEventListener("click", () => {
-    currentIndex = (currentIndex + 1) % playlist.length;
-    renderSong();
-    playCurrent();
-  });
+  prev?.addEventListener("click", () => playIndex(currentIndex - 1, true));
+  next?.addEventListener("click", () => playIndex(currentIndex + 1, true));
 
   progress?.addEventListener("input", () => {
     if (!audio.duration) return;
@@ -747,31 +825,32 @@ function initSimpleMusicPlayer() {
   });
 
   audio.addEventListener("loadedmetadata", () => {
-    duration.textContent = formatTime(audio.duration);
+    if (duration) duration.textContent = formatTime(audio.duration);
   });
 
   audio.addEventListener("timeupdate", () => {
-    current.textContent = formatTime(audio.currentTime);
-    duration.textContent = formatTime(audio.duration);
-    progress.value = audio.duration ? String((audio.currentTime / audio.duration) * 100) : "0";
-    setLyric(activeLyric(playlist[currentIndex]));
+    if (current) current.textContent = formatTime(audio.currentTime);
+    if (duration) duration.textContent = formatTime(audio.duration);
+    if (progress) progress.value = audio.duration ? String((audio.currentTime / audio.duration) * 100) : "0";
   });
 
-  audio.addEventListener("ended", () => {
-    currentIndex = (currentIndex + 1) % playlist.length;
-    renderSong();
-    playCurrent();
-  });
+  audio.addEventListener("ended", () => playIndex(currentIndex + 1, true));
 
   audio.addEventListener("error", () => {
-    setLyric("音频路径读取失败，请检查 assets/music/ 中的文件名。");
+    setLyric("音频路径读取失败，请检查控制台里的音频路径。");
     updatePlayingState();
   });
 
   renderSong();
+  return { setPlaylist, playIndex };
 }
 
-initSimpleMusicPlayer();
+function initSimpleMusicPlayers() {
+  musicControllers = [...musicPlayerRoots].map((root) => createMusicPlayer(root));
+  renderMusicTrackList();
+}
+
+initSimpleMusicPlayers();
 
 authModeButtons.forEach((button) => {
   button.addEventListener("click", () => setAuthMode(button.dataset.authModeButton));
