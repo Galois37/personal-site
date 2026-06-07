@@ -22,6 +22,9 @@ const themeKey = "galois37_theme";
 
 const defaultSettings = {
   "site.name": "Galois37の完美算术教室",
+  "site.onlineSince": "2026-06-02T00:00:00+08:00",
+  "stats.baseVisitors": "0",
+  "stats.baseViews": "0",
   "home.nickname": "Galois37",
   "home.subtitle": "欢迎来到Galois37の完美教室",
   "about.quote": "残酷な世界で咲く終焉の花",

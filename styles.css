@@ -1559,11 +1559,7 @@ body[data-page="home"] .site-header {
 }
 
 body[data-page="home"] .site-footer {
-  position: relative;
-  z-index: 2;
-  margin-top: 0;
-  background: rgba(8, 11, 22, 0.82);
-  backdrop-filter: blur(16px);
+  display: none;
 }
 
 html[data-theme="light"] .site-header,
@@ -2197,6 +2193,77 @@ html[data-theme="light"] .music-controls button {
   line-height: 1.45;
 }
 
+.home-site-status {
+  display: grid;
+  grid-template-columns: minmax(180px, 0.82fr) minmax(260px, 1.1fr) minmax(280px, 1fr);
+  align-items: stretch;
+  margin-top: clamp(24px, 4vw, 38px);
+  overflow: hidden;
+  border: 1px solid rgba(210, 222, 255, 0.22);
+  border-radius: 8px;
+  background:
+    linear-gradient(135deg, rgba(48, 65, 104, 0.32), rgba(13, 18, 35, 0.2)),
+    rgba(13, 18, 35, 0.22);
+  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.32);
+  backdrop-filter: blur(18px) saturate(140%);
+}
+
+.site-clock {
+  display: grid;
+  place-items: center;
+  min-height: 70px;
+  padding: 14px 22px;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.52);
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: clamp(1.6rem, 3.4vw, 2.45rem);
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  font-variant-numeric: tabular-nums;
+}
+
+.site-uptime,
+.site-metrics {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 70px;
+  padding: 14px 20px;
+  color: rgba(235, 241, 255, 0.78);
+  font-weight: 800;
+}
+
+.site-uptime strong,
+.site-metrics strong {
+  color: #8a7cf6;
+  font-weight: 950;
+}
+
+.status-dot {
+  flex: 0 0 auto;
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: #42e890;
+  box-shadow: 0 0 18px rgba(66, 232, 144, 0.78);
+}
+
+.site-metrics {
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.site-metrics span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 34px;
+  padding: 6px 12px;
+  border: 1px solid rgba(124, 211, 255, 0.2);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
 .project-note { --project-bg: url("assets/room-notes.jpg"); }
 .project-ask { --project-bg: url("assets/room-ask.jpg"); }
 .project-about { --project-bg: url("assets/about-bg.png"); }
@@ -2212,12 +2279,33 @@ html[data-theme="light"] .music-controls button {
 
 html[data-theme="light"] .home-persona-card,
 html[data-theme="light"] .music-placeholder,
-html[data-theme="light"] .home-project-card {
+html[data-theme="light"] .home-project-card,
+html[data-theme="light"] .home-site-status {
   border-color: rgba(255, 238, 184, 0.34);
   background:
     linear-gradient(135deg, rgba(255, 250, 235, 0.46), rgba(255, 222, 148, 0.2)),
     rgba(255, 244, 214, 0.26);
   box-shadow: 0 28px 80px rgba(115, 76, 28, 0.22);
+}
+
+html[data-theme="light"] .site-clock {
+  color: #3a2b1d;
+  background: rgba(255, 250, 235, 0.5);
+}
+
+html[data-theme="light"] .site-uptime,
+html[data-theme="light"] .site-metrics {
+  color: rgba(51, 37, 26, 0.72);
+}
+
+html[data-theme="light"] .site-metrics span {
+  border-color: rgba(174, 128, 47, 0.2);
+  background: rgba(255, 250, 235, 0.32);
+}
+
+html[data-theme="light"] .site-uptime strong,
+html[data-theme="light"] .site-metrics strong {
+  color: #a061d8;
 }
 
 html[data-theme="light"] .home-persona-head h2,
@@ -2462,6 +2550,20 @@ html[data-theme="light"] .music-controls button {
     grid-row: auto;
     min-height: 190px;
   }
+
+  .home-site-status {
+    grid-template-columns: 1fr;
+  }
+
+  .site-clock,
+  .site-uptime,
+  .site-metrics {
+    min-height: 58px;
+  }
+
+  .site-metrics {
+    justify-content: flex-start;
+  }
 }
 
 @media (max-width: 560px) {
@@ -2579,6 +2681,25 @@ html[data-theme="light"] .music-controls button {
     grid-row: auto;
     min-height: 176px;
     padding: 16px;
+  }
+
+  .home-site-status {
+    margin-top: 18px;
+  }
+
+  .site-clock {
+    padding: 12px 14px;
+    font-size: clamp(1.45rem, 10vw, 2rem);
+  }
+
+  .site-uptime,
+  .site-metrics {
+    padding: 12px 14px;
+  }
+
+  .site-metrics span {
+    width: 100%;
+    justify-content: space-between;
   }
 
   .hero-profile {

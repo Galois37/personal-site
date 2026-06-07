@@ -27,6 +27,9 @@ const ownerDisplayName = "Galois37的猫猫";
 
 const defaultSettings = {
   "site.name": "Galois37の完美算术教室",
+  "site.onlineSince": "2026-06-02T00:00:00+08:00",
+  "stats.baseVisitors": "0",
+  "stats.baseViews": "0",
   "home.nickname": "Galois37",
   "home.subtitle": "欢迎来到Galois37の完美教室",
   "about.quote": "残酷な世界で咲く終焉の花",
@@ -38,6 +41,12 @@ const defaultSettings = {
   "rooms.notesTitle": "37的数学笔记",
   "rooms.articlesTitle": "数学之外のmeta",
   "rooms.askTitle": "提问箱与讨论区",
+};
+
+let runtimeConfig = {
+  onlineSince: new Date(defaultSettings["site.onlineSince"]).getTime(),
+  baseVisitors: Number(defaultSettings["stats.baseVisitors"]) || 0,
+  baseViews: Number(defaultSettings["stats.baseViews"]) || 0,
 };
 
 function escapeHtml(value) {
@@ -80,6 +89,8 @@ function initialTheme() {
 }
 
 applyTheme(initialTheme());
+updateRuntimeClock();
+setInterval(updateRuntimeClock, 1000);
 
 function renderMessages(target, items, emptyTitle, emptyText) {
   if (!target) return;
@@ -148,6 +159,46 @@ function setHref(selector, value) {
   });
 }
 
+function numberSetting(value, fallback = 0) {
+  const number = Number.parseInt(value, 10);
+  return Number.isFinite(number) ? number : fallback;
+}
+
+function configureRuntime(data) {
+  const onlineSince = new Date(data["site.onlineSince"] || defaultSettings["site.onlineSince"]).getTime();
+  runtimeConfig = {
+    onlineSince: Number.isFinite(onlineSince) ? onlineSince : new Date(defaultSettings["site.onlineSince"]).getTime(),
+    baseVisitors: numberSetting(data["stats.baseVisitors"], 0),
+    baseViews: numberSetting(data["stats.baseViews"], 0),
+  };
+  updateRuntimeClock();
+}
+
+function padTime(value) {
+  return String(value).padStart(2, "0");
+}
+
+function formatUptime(milliseconds) {
+  const totalMinutes = Math.max(0, Math.floor(milliseconds / 60000));
+  const days = Math.floor(totalMinutes / 1440);
+  const hours = Math.floor((totalMinutes % 1440) / 60);
+  const minutes = totalMinutes % 60;
+  return `${days}天${hours}小时${minutes}分`;
+}
+
+function updateRuntimeClock() {
+  const clock = document.querySelector("[data-site-clock]");
+  const uptime = document.querySelector("[data-site-uptime]");
+  if (!clock && !uptime) return;
+
+  const now = new Date();
+  if (clock) {
+    clock.textContent = `${padTime(now.getHours())}:${padTime(now.getMinutes())}:${padTime(now.getSeconds())}`;
+    clock.dateTime = now.toISOString();
+  }
+  if (uptime) uptime.textContent = formatUptime(now.getTime() - runtimeConfig.onlineSince);
+}
+
 function qqLink(qq) {
   return `tencent://message/?uin=${encodeURIComponent(qq)}&Site=Galois37&Menu=yes`;
 }
@@ -171,6 +222,7 @@ function renderRichText(target, value) {
 
 function applySettings(settings) {
   const data = { ...defaultSettings, ...settings };
+  configureRuntime(data);
   const siteName = data["site.name"];
   setText(".brand span:last-child", siteName);
   if (document.body.dataset.page === "home") document.title = siteName;
@@ -246,6 +298,10 @@ function formatCount(value) {
   return String(value).padStart(2, "0");
 }
 
+function formatLargeNumber(value) {
+  return new Intl.NumberFormat("zh-CN").format(Number(value) || 0);
+}
+
 function updateHomeStats(items) {
   const notes = items.filter((item) => item.type === "note").length;
   const resourceLibraryEntry = 1;
@@ -264,7 +320,11 @@ async function loadHomeStats() {
     const result = await response.json().catch(() => ({}));
     if (!response.ok) return;
     const askCount = document.querySelector('[data-stat-count="asks"]');
-    if (askCount) askCount.textContent = formatCount(result.totalMessages || 0);
+    if (askCount) askCount.textContent = formatCount(result.totalPublicMessages || 0);
+    const visitorCount = document.querySelector("[data-total-visitors]");
+    const viewCount = document.querySelector("[data-total-views]");
+    if (visitorCount) visitorCount.textContent = formatLargeNumber(result.totalVisitors ?? runtimeConfig.baseVisitors);
+    if (viewCount) viewCount.textContent = formatLargeNumber(result.totalViews ?? runtimeConfig.baseViews);
   } catch {
   }
 }
@@ -496,7 +556,7 @@ async function loadPublicMessages() {
       "登录后提问并收到私人回复时，会显示在这里。"
     );
     const askCount = document.querySelector('[data-stat-count="asks"]');
-    if (askCount) askCount.textContent = formatCount(items.length);
+    if (askCount) askCount.textContent = formatCount(publicItems.length);
   } catch (error) {
     publicMessages.innerHTML = `
       <article>
