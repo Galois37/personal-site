@@ -48,6 +48,40 @@ function coverUrl(track) {
   return track.al?.picUrl || track.album?.picUrl || "";
 }
 
+function parseLrcLines(lyric) {
+  const lines = [];
+  String(lyric || "").split("\n").forEach((line) => {
+    const matches = [...line.matchAll(/\[(\d{1,2}):(\d{2})(?:\.(\d{1,3}))?\]/g)];
+    const text = line.replace(/\[[^\]]+\]/g, "").trim();
+    if (!matches.length || !text) return;
+    matches.forEach((match) => {
+      const minute = match[1].padStart(2, "0");
+      const second = match[2].padStart(2, "0");
+      const fraction = (match[3] || "00").padEnd(2, "0").slice(0, 2);
+      lines.push({ key: `${minute}:${second}.${fraction}`, tag: `[${minute}:${second}.${fraction}]`, text });
+    });
+  });
+  return lines;
+}
+
+function mergeBilingualLyrics(original, translated) {
+  const originalLines = parseLrcLines(original);
+  const translatedLines = parseLrcLines(translated);
+  if (!originalLines.length) return String(translated || original || "").trim();
+  if (!translatedLines.length) return String(original || "").trim();
+
+  const translatedByTime = new Map();
+  translatedLines.forEach((line) => {
+    if (!translatedByTime.has(line.key)) translatedByTime.set(line.key, []);
+    translatedByTime.get(line.key).push(line.text);
+  });
+
+  return originalLines.map((line) => {
+    const translatedText = (translatedByTime.get(line.key) || []).join(" / ");
+    return translatedText ? `${line.tag}${line.text} / ${translatedText}` : `${line.tag}${line.text}`;
+  }).join("\n");
+}
+
 function normalizeSong(track, index = 0, note = "来自网易云，音频请自行填入本地 mp3 路径。") {
   return {
     id: `netease-${track.id || Date.now()}-${index}`,
@@ -67,7 +101,7 @@ async function fetchLyric(songId) {
   if (!songId) return "";
   try {
     const data = await fetchJson(`https://music.163.com/api/song/lyric?id=${songId}&lv=1&kv=1&tv=-1`);
-    return String(data?.lrc?.lyric || "").trim();
+    return mergeBilingualLyrics(data?.lrc?.lyric || "", data?.tlyric?.lyric || "");
   } catch {
     return "";
   }
@@ -152,7 +186,21 @@ export async function onRequestGet({ request, env }) {
   }
 
   const playlist = data?.playlist || data?.result;
-  const tracks = (playlist?.tracks || []).slice(0, limit);
+  const initialTracks = (playlist?.tracks || []).slice(0, limit);
+  const trackIds = (playlist?.trackIds || [])
+    .map((item) => String(item?.id || ""))
+    .filter(Boolean)
+    .slice(0, limit);
+  let tracks = initialTracks;
+  if (trackIds.length > initialTracks.length) {
+    const initialById = new Map(initialTracks.map((track) => [String(track.id), track]));
+    const detailResults = await Promise.allSettled(
+      trackIds.map((trackId) => initialById.get(trackId) || fetchSongDetail(trackId))
+    );
+    tracks = detailResults
+      .filter((result) => result.status === "fulfilled" && result.value)
+      .map((result) => result.value);
+  }
   if (!playlist || !tracks.length) {
     return json({
       error: lastError?.message || "没有从网易云读取到歌单曲目。可能是歌单非公开、接口限制或网络暂时不可用。",
