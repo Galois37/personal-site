@@ -269,7 +269,7 @@ function normalizeMusicPlaylist(value) {
       status: String(item.status || "visible").trim(),
     }))
     .map((item) => ({ ...item, lyricLines: parseLyrics(item.lyrics) }))
-    .filter((item) => item.src && item.status !== "draft");
+    .filter((item) => item.title !== "[object Object]" && item.src && item.status !== "draft");
 
   return normalized.length ? normalized : defaultMusicPlaylist;
 }

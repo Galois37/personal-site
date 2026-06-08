@@ -179,28 +179,63 @@ function parseMusicPlaylist(value) {
     }
   }
   if (!Array.isArray(items)) items = [];
-  const normalized = items.map((item, index) => ({
-    id: String(item.id || `track-${Date.now()}-${index}`),
-    title: String(item.title || "未命名音轨"),
-    artist: String(item.artist || "未知作者"),
-    cover: String(item.cover || "assets/avatar.jpg").replace(/\\/g, "/"),
-    src: String(item.src || "").replace(/\\/g, "/"),
-    note: String(item.note || ""),
-    lyrics: String(item.lyrics || ""),
-    source: String(item.source || "local"),
-    sourceId: String(item.sourceId || item.neteaseId || ""),
-    status: String(item.status || "visible"),
-  }));
+  const normalized = items
+    .map((item, index) => ({
+      id: String(item.id || `track-${Date.now()}-${index}`),
+      title: String(item.title || "未命名音轨"),
+      artist: String(item.artist || "未知作者"),
+      cover: String(item.cover || "assets/avatar.jpg").replace(/\\/g, "/"),
+      src: String(item.src || "").replace(/\\/g, "/"),
+      note: String(item.note || ""),
+      lyrics: String(item.lyrics || ""),
+      source: String(item.source || "local"),
+      sourceId: String(item.sourceId || item.neteaseId || ""),
+      status: String(item.status || "visible"),
+    }))
+    .filter((item) => item.title !== "[object Object]");
   return normalized.length ? normalized : defaultMusicPlaylist;
 }
 
 function parseBulkMusicImport(value) {
-  const source = String(value || "").trim();
-  if (!source) return [];
   let parsed;
-  try {
-    parsed = JSON.parse(source);
-  } catch {
+
+  if (Array.isArray(value)) {
+    parsed = value;
+  } else if (value && typeof value === "object") {
+    parsed = value;
+  } else {
+    const source = String(value || "").trim();
+    if (!source) return [];
+    try {
+      parsed = JSON.parse(source);
+    } catch {
+      if (source.includes("[object Object]")) return [];
+
+      return source
+        .split("\n")
+        .map((line) => line.trim())
+        .filter(Boolean)
+        .map((line, index) => {
+          const parts = line.split("|").map((part) => part.trim());
+          return {
+            id: `track-${Date.now()}-${index}`,
+            title: parts[0] || "未命名音轨",
+            artist: parts[1] || "未知作者",
+            src: (parts[2] || "").replace(/\\/g, "/"),
+            cover: (parts[3] || "assets/avatar.jpg").replace(/\\/g, "/"),
+            lyrics: parts[4] || "",
+            note: parts[5] || "",
+            source: parts[6] || "local",
+            sourceId: parts[7] || "",
+            status: "visible",
+          };
+        });
+    }
+  }
+
+  if (typeof parsed === "string") {
+    const source = parsed.trim();
+    if (!source || source.includes("[object Object]")) return [];
     return source
       .split("\n")
       .map((line) => line.trim())
