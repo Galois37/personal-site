@@ -1,11 +1,11 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>控制台 | Galois37の完美算术教室</title>
   <meta name="description" content="Galois37 网站控制台。">
-  <link rel="stylesheet" href="styles.css?v=20260607-music-playlist-1">
+  <link rel="stylesheet" href="styles.css?v=20260608-music-netease-song-1">
 </head>
 <body data-page="admin">
   <main class="admin-shell">
@@ -180,6 +180,9 @@
           <label>音频路径<input type="text" name="src" placeholder="assets/music/yoru-no-himawari.mp3" required></label>
           <label>封面路径<input type="text" name="cover" placeholder="assets/music/yoru-no-himawari-cover.jpg"></label>
           <label>备注 / 歌词提示<textarea name="note" rows="3" placeholder="纯音乐可以写：纯音乐 无歌词"></textarea></label>
+          <label>歌词<textarea name="lyrics" rows="6" placeholder="[00:00.00]第一句歌词&#10;[00:12.50]第二句歌词"></textarea></label>
+          <label>来源<input type="text" name="source" placeholder="local / netease / other" value="local"></label>
+          <label>来源 ID<input type="text" name="sourceId" placeholder="例如网易云歌曲 ID，可留空"></label>
           <label>
             状态
             <select name="status">
@@ -190,6 +193,37 @@
           <button class="button primary" type="submit">添加音乐</button>
           <p class="form-status" role="status" aria-live="polite"></p>
         </form>
+        <form class="ask-form music-form" data-music-bulk-form>
+          <h3>批量导入歌单</h3>
+          <p class="aside-text">可粘贴 JSON 数组，字段支持 title、artist、src、cover、lyrics、note、source、sourceId。也支持一行一首：标题 | 作者 | 音频路径 | 封面路径 | 歌词 | 备注 | 来源 | 来源ID。</p>
+          <label>歌单数据<textarea name="playlist" rows="9" placeholder='[{"title":"夜の向日葵","artist":"松本文紀","src":"assets/music/yoru-no-himawari.mp3","cover":"assets/music/yoru-no-himawari-cover.jpg","lyrics":"[00:00.00]..."}]'></textarea></label>
+          <label>
+            导入方式
+            <select name="mode">
+              <option value="append">追加到当前歌单</option>
+              <option value="replace">替换当前歌单</option>
+            </select>
+          </label>
+          <button class="button secondary" type="submit">批量导入</button>
+          <p class="form-status" role="status" aria-live="polite"></p>
+        </form>
+        <form class="ask-form music-form" data-music-netease-form>
+          <h3>从网易云歌单 / 单曲导入</h3>
+          <p class="aside-text">填写公开歌单、单曲链接或 ID。这里主要导入标题、作者、封面、歌词和歌曲 ID；音频 mp3 仍建议你之后自己上传并填写站内路径。</p>
+          <label>歌单 / 单曲链接或 ID<input type="text" name="playlist" placeholder="https://music.163.com/#/playlist?id=... 或 https://y.music.163.com/m/song?id=..."></label>
+          <label>导入数量<input type="number" name="limit" min="1" max="100" value="50"></label>
+          <label class="checkbox-row"><input type="checkbox" name="lyrics" checked> 同时尝试导入 LRC 歌词</label>
+          <label>
+            导入方式
+            <select name="mode">
+              <option value="append">追加到当前歌单</option>
+              <option value="replace">替换当前歌单</option>
+            </select>
+          </label>
+          <button class="button secondary" type="submit">读取并导入草稿</button>
+          <p class="form-status" role="status" aria-live="polite"></p>
+        </form>
+        <div class="admin-list music-admin-list" data-music-netease-preview></div>
         <div class="admin-list music-admin-list" data-music-list-admin></div>
       </section>
 
@@ -207,9 +241,12 @@
     </section>
   </main>
 
-  <script src="admin.js?v=20260607-music-playlist-1"></script>
+  <script src="admin.js?v=20260608-music-netease-song-1"></script>
 </body>
 </html>
+
+
+
 
 
 

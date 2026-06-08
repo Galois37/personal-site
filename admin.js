@@ -4,6 +4,9 @@ const contentForm = document.querySelector("[data-content-form]");
 const friendForm = document.querySelector("[data-friend-form]");
 const momentForm = document.querySelector("[data-moment-form]");
 const musicForm = document.querySelector("[data-music-form]");
+const musicBulkForm = document.querySelector("[data-music-bulk-form]");
+const musicNeteaseForm = document.querySelector("[data-music-netease-form]");
+const musicNeteasePreview = document.querySelector("[data-music-netease-preview]");
 const loginPanel = document.querySelector("[data-admin-login]");
 const dashboard = document.querySelector("[data-admin-dashboard]");
 const adminList = document.querySelector("[data-admin-list]");
@@ -30,6 +33,21 @@ const defaultMusicPlaylist = [
     cover: "assets/music/yoru-no-himawari-cover.jpg",
     src: "assets/music/yoru-no-himawari.mp3",
     note: "纯音乐 无歌词",
+    lyrics: "",
+    source: "local",
+    sourceId: "",
+    status: "visible"
+  },
+  {
+    id: "natsu-no-daisankaku",
+    title: "夏の大三角",
+    artist: "ryo (supercell)",
+    cover: "https://p1.music.126.net/3rtl6iK4Cue6mhE02ZNj2A==/109951166171557761.jpg",
+    src: "assets/music/natsu-no-daisankaku.mp3",
+    note: "纯音乐 无歌词",
+    lyrics: "",
+    source: "netease",
+    sourceId: "4937375",
     status: "visible"
   }
 ];
@@ -168,9 +186,85 @@ function parseMusicPlaylist(value) {
     cover: String(item.cover || "assets/avatar.jpg").replace(/\\/g, "/"),
     src: String(item.src || "").replace(/\\/g, "/"),
     note: String(item.note || ""),
+    lyrics: String(item.lyrics || ""),
+    source: String(item.source || "local"),
+    sourceId: String(item.sourceId || item.neteaseId || ""),
     status: String(item.status || "visible"),
   }));
   return normalized.length ? normalized : defaultMusicPlaylist;
+}
+
+function parseBulkMusicImport(value) {
+  const source = String(value || "").trim();
+  if (!source) return [];
+  let parsed;
+  try {
+    parsed = JSON.parse(source);
+  } catch {
+    return source
+      .split("\n")
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .map((line, index) => {
+        const parts = line.split("|").map((part) => part.trim());
+        return {
+          id: `track-${Date.now()}-${index}`,
+          title: parts[0] || "未命名音轨",
+          artist: parts[1] || "未知作者",
+          src: (parts[2] || "").replace(/\\/g, "/"),
+          cover: (parts[3] || "assets/avatar.jpg").replace(/\\/g, "/"),
+          lyrics: parts[4] || "",
+          note: parts[5] || "",
+          source: parts[6] || "local",
+          sourceId: parts[7] || "",
+          status: "visible",
+        };
+      });
+  }
+
+  const items = Array.isArray(parsed) ? parsed : (parsed.tracks || parsed.songs || parsed.playlist || []);
+  if (!Array.isArray(items) || !items.length) return [];
+  return parseMusicPlaylist(items)
+    .map((item, index) => ({
+      ...item,
+      id: item.id || `track-${Date.now()}-${index}`,
+      status: item.status || "visible",
+    }));
+}
+
+function renderNeteasePreview(data) {
+  if (!musicNeteasePreview) return;
+  const items = data.items || [];
+  if (!items.length) {
+    musicNeteasePreview.innerHTML = `<article class="glass-card admin-row"><strong>没有可预览的歌曲。</strong></article>`;
+    return;
+  }
+
+  musicNeteasePreview.innerHTML = `
+    <article class="glass-card admin-row">
+      <div class="admin-row-head">
+        <div>
+          <strong>${escapeHtml(data.playlist?.name || "网易云导入")}</strong>
+          <span class="admin-pill">${items.length} 首待导入</span>
+        </div>
+        <time>${escapeHtml(data.playlist?.id || "")}</time>
+      </div>
+      <p>${escapeHtml(data.warning || "音频路径需要后续自行补充。")}</p>
+    </article>
+    ${items.slice(0, 10).map((item) => `
+      <article class="glass-card admin-row">
+        <div class="admin-row-head">
+          <div>
+            <img class="admin-friend-avatar" src="${escapeHtml(item.cover || "assets/avatar.jpg")}" alt="" loading="lazy">
+            <strong>${escapeHtml(item.title)}</strong>
+            <span class="admin-pill">${escapeHtml(item.artist)}</span>
+            <span class="admin-pill">${item.lyrics ? "已带歌词" : "无歌词"}</span>
+          </div>
+          <time>${escapeHtml(item.sourceId)}</time>
+        </div>
+      </article>
+    `).join("")}
+  `;
 }
 
 async function saveMusicPlaylist(items) {
@@ -205,6 +299,9 @@ function renderMusicItems(items) {
       <label>音频路径<input type="text" name="src" value="${escapeHtml(item.src || "")}" placeholder="assets/music/song.mp3 或 https://..."></label>
       <label>封面路径<input type="text" name="cover" value="${escapeHtml(item.cover || "")}" placeholder="assets/music/cover.jpg 或 https://..."></label>
       <label>备注 / 歌词提示<textarea name="note" rows="3" placeholder="纯音乐可以写：纯音乐 无歌词">${escapeHtml(item.note || "")}</textarea></label>
+      <label>歌词<textarea name="lyrics" rows="7" placeholder="[00:00.00]第一句歌词&#10;[00:12.50]第二句歌词">${escapeHtml(item.lyrics || "")}</textarea></label>
+      <label>来源<input type="text" name="source" value="${escapeHtml(item.source || "local")}" placeholder="local / netease / other"></label>
+      <label>来源 ID<input type="text" name="sourceId" value="${escapeHtml(item.sourceId || "")}" placeholder="例如网易云歌曲 ID，可留空"></label>
       <label>
         状态
         <select name="status">
@@ -237,6 +334,8 @@ function renderMusicItems(items) {
       });
       updated.src = updated.src.replace(/\\/g, "/");
       updated.cover = updated.cover.replace(/\\/g, "/");
+      updated.source = updated.source || "local";
+      updated.sourceId = updated.sourceId || "";
       nextItems[index] = updated;
 
       button.disabled = true;
@@ -784,6 +883,9 @@ musicForm?.addEventListener("submit", async (event) => {
     src: String(payload.src || "").replace(/\\/g, "/"),
     cover: String(payload.cover || "assets/avatar.jpg").replace(/\\/g, "/"),
     note: payload.note || "",
+    lyrics: payload.lyrics || "",
+    source: payload.source || "local",
+    sourceId: payload.sourceId || "",
     status: payload.status || "visible",
   };
 
@@ -798,6 +900,63 @@ musicForm?.addEventListener("submit", async (event) => {
     musicForm.reset();
   } catch (error) {
     setStatus(musicForm, error.message);
+  }
+});
+
+musicBulkForm?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const formData = new FormData(musicBulkForm);
+  const imported = parseBulkMusicImport(formData.get("playlist"));
+  if (!imported.length) {
+    setStatus(musicBulkForm, "没有识别到可导入的歌曲。");
+    return;
+  }
+
+  const mode = formData.get("mode") || "append";
+  const currentItems = parseMusicPlaylist(currentSettings["music.playlist"]);
+  const nextItems = mode === "replace" ? imported : [...currentItems, ...imported];
+
+  try {
+    await saveMusicPlaylist(nextItems);
+    setStatus(musicBulkForm, `已导入 ${imported.length} 首歌曲。`);
+    musicBulkForm.reset();
+  } catch (error) {
+    setStatus(musicBulkForm, error.message);
+  }
+});
+
+musicNeteaseForm?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const formData = new FormData(musicNeteaseForm);
+  const playlist = String(formData.get("playlist") || "").trim();
+  const limit = String(formData.get("limit") || "50").trim();
+  const includeLyrics = formData.get("lyrics") === "on";
+  const mode = formData.get("mode") || "append";
+  const button = musicNeteaseForm.querySelector('button[type="submit"]');
+
+  if (!playlist) {
+    setStatus(musicNeteaseForm, "请填写网易云歌单/单曲链接或 ID。");
+    return;
+  }
+
+  if (button) button.disabled = true;
+  setStatus(musicNeteaseForm, "正在读取网易云歌单/单曲...");
+  try {
+    const data = await api(`/api/music/netease?playlist=${encodeURIComponent(playlist)}&limit=${encodeURIComponent(limit)}&lyrics=${includeLyrics ? "1" : "0"}`);
+    const imported = parseBulkMusicImport(data.items || []);
+    if (!imported.length) throw new Error("没有可导入的歌曲。");
+    const currentItems = parseMusicPlaylist(currentSettings["music.playlist"]);
+    const nextItems = mode === "replace" ? imported : [...currentItems, ...imported];
+    await saveMusicPlaylist(nextItems);
+    renderNeteasePreview({ ...data, items: imported });
+    setStatus(musicNeteaseForm, `已导入 ${imported.length} 首草稿歌曲。请补充 mp3 路径后再设为加入歌单。`);
+  } catch (error) {
+    setStatus(musicNeteaseForm, error.message);
+    if (musicNeteasePreview) {
+      musicNeteasePreview.innerHTML = `<article class="glass-card admin-row"><strong>导入失败</strong><p>${escapeHtml(error.message)}</p></article>`;
+    }
+  } finally {
+    if (button) button.disabled = false;
   }
 });
 

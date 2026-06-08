@@ -3,6 +3,10 @@ const siteNav = document.querySelector(".site-nav");
 const themeToggle = document.querySelector("[data-theme-toggle]");
 const musicPlayerRoots = document.querySelectorAll("[data-music-player]");
 const musicListBoard = document.querySelector("[data-music-list]");
+const musicLyricBoard = document.querySelector("[data-music-lyrics]");
+const musicSearchInput = document.querySelector("[data-music-search]");
+const musicPanelTabs = document.querySelectorAll("[data-music-panel-tab]");
+const musicPanelViews = document.querySelectorAll("[data-music-panel]");
 const messageForm = document.querySelector("[data-message-form], [data-static-form]");
 const publicMessages = document.querySelector("[data-public-messages]");
 const privateMessages = document.querySelector("[data-private-messages]");
@@ -34,6 +38,21 @@ const defaultMusicPlaylist = [
     cover: "assets/music/yoru-no-himawari-cover.jpg",
     src: "assets/music/yoru-no-himawari.mp3",
     note: "纯音乐 无歌词",
+    lyrics: "",
+    source: "local",
+    sourceId: "",
+    status: "visible"
+  },
+  {
+    id: "natsu-no-daisankaku",
+    title: "夏の大三角",
+    artist: "ryo (supercell)",
+    cover: "https://p1.music.126.net/3rtl6iK4Cue6mhE02ZNj2A==/109951166171557761.jpg",
+    src: "assets/music/natsu-no-daisankaku.mp3",
+    note: "纯音乐 无歌词",
+    lyrics: "",
+    source: "netease",
+    sourceId: "4937375",
     status: "visible"
   }
 ];
@@ -63,6 +82,8 @@ let runtimeConfig = {
   baseViews: Number(defaultSettings["stats.baseViews"]) || 0,
 };
 let activeMusicPlaylist = defaultMusicPlaylist;
+let currentMusicIndex = 0;
+let currentMusicSearch = "";
 let musicControllers = [];
 
 function escapeHtml(value) {
@@ -190,6 +211,39 @@ function configureRuntime(data) {
   updateRuntimeClock();
 }
 
+function parseLyrics(value) {
+  const source = String(value || "").replace(/\r\n/g, "\n").trim();
+  if (!source) return [];
+
+  const timedLines = [];
+  const timeTagPattern = /\[(?:(\d{1,2}):)?(\d{1,2}):(\d{2})(?:[.:](\d{1,3}))?\]/g;
+
+  source.split("\n").forEach((line) => {
+    const matches = [...line.matchAll(timeTagPattern)];
+    const text = line.replace(timeTagPattern, "").trim();
+    if (!matches.length) return;
+
+    matches.forEach((match) => {
+      const hours = Number(match[1] || 0);
+      const minutes = Number(match[2] || 0);
+      const seconds = Number(match[3] || 0);
+      const fraction = match[4] ? Number(`0.${match[4].padEnd(3, "0").slice(0, 3)}`) : 0;
+      const time = (hours * 3600) + (minutes * 60) + seconds + fraction;
+      if (Number.isFinite(time) && text) timedLines.push({ time, text });
+    });
+  });
+
+  if (timedLines.length) {
+    return timedLines.sort((a, b) => a.time - b.time);
+  }
+
+  return source
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((text) => ({ time: null, text }));
+}
+
 function normalizeMusicPlaylist(value) {
   let items = value;
   if (typeof value === "string") {
@@ -209,14 +263,19 @@ function normalizeMusicPlaylist(value) {
       cover: String(item.cover || "assets/avatar.jpg").trim().replace(/\\/g, "/"),
       src: String(item.src || "").trim().replace(/\\/g, "/"),
       note: String(item.note || "").trim(),
+      lyrics: String(item.lyrics || "").trim(),
+      source: String(item.source || "local").trim(),
+      sourceId: String(item.sourceId || item.neteaseId || "").trim(),
       status: String(item.status || "visible").trim(),
     }))
+    .map((item) => ({ ...item, lyricLines: parseLyrics(item.lyrics) }))
     .filter((item) => item.src && item.status !== "draft");
 
   return normalized.length ? normalized : defaultMusicPlaylist;
 }
 
 function syncMusicSelection(index) {
+  currentMusicIndex = Number(index) || 0;
   document.querySelectorAll("[data-music-select]").forEach((button) => {
     const isActive = Number(button.dataset.musicSelect) === index;
     button.classList.toggle("is-active", isActive);
@@ -224,10 +283,60 @@ function syncMusicSelection(index) {
   });
 }
 
+function renderMusicLyrics(track, activeIndex = -1) {
+  if (!musicLyricBoard) return;
+  const lines = track?.lyricLines || parseLyrics(track?.lyrics || "");
+  if (!lines.length) {
+    musicLyricBoard.innerHTML = `
+      <p class="music-lyrics-empty">${escapeHtml(track?.note || "纯音乐 无歌词")}</p>
+    `;
+    return;
+  }
+
+  musicLyricBoard.innerHTML = lines.map((line, index) => `
+    <p class="music-lyric-line ${index === activeIndex ? "is-active" : ""}" data-lyric-line="${index}">
+      ${escapeHtml(line.text)}
+    </p>
+  `).join("");
+}
+
+function updateActiveMusicLyric(track, seconds) {
+  if (!track?.lyricLines?.length || track.lyricLines.every((line) => line.time === null)) return -1;
+  let activeIndex = -1;
+  track.lyricLines.forEach((line, index) => {
+    if (line.time !== null && line.time <= seconds + 0.15) activeIndex = index;
+  });
+  return activeIndex;
+}
+
+function setActiveMusicLyric(index) {
+  if (!musicLyricBoard) return;
+  musicLyricBoard.querySelectorAll("[data-lyric-line]").forEach((line) => {
+    const isActive = Number(line.dataset.lyricLine) === index;
+    line.classList.toggle("is-active", isActive);
+    if (isActive) {
+      line.scrollIntoView({ block: "center", behavior: "smooth" });
+    }
+  });
+}
+
 function renderMusicTrackList() {
   if (!musicListBoard) return;
-  musicListBoard.innerHTML = activeMusicPlaylist.map((track, index) => `
-    <button class="music-track-card ${index === 0 ? "is-active" : ""}" type="button" data-music-select="${index}" aria-pressed="${index === 0 ? "true" : "false"}">
+  const query = currentMusicSearch.trim().toLowerCase();
+  const visibleItems = activeMusicPlaylist
+    .map((track, index) => ({ track, index }))
+    .filter(({ track }) => !query
+      || track.title.toLowerCase().includes(query)
+      || track.artist.toLowerCase().includes(query)
+      || track.note.toLowerCase().includes(query));
+
+  if (!visibleItems.length) {
+    musicListBoard.innerHTML = `<p class="music-lyrics-empty">没有找到匹配的音轨。</p>`;
+    return;
+  }
+
+  musicListBoard.innerHTML = visibleItems.map(({ track, index }) => `
+    <button class="music-track-card ${index === currentMusicIndex ? "is-active" : ""}" type="button" data-music-select="${index}" aria-pressed="${index === currentMusicIndex ? "true" : "false"}">
       <span class="music-track-cover"><img src="${escapeHtml(track.cover || "assets/avatar.jpg")}" alt="" loading="lazy"></span>
       <span class="music-track-body">
         <strong>${escapeHtml(track.title)}</strong>
@@ -252,6 +361,19 @@ function configureMusicPlaylist(value) {
   musicControllers.forEach((controller) => controller.setPlaylist(activeMusicPlaylist));
   renderMusicTrackList();
   syncMusicSelection(0);
+  renderMusicLyrics(activeMusicPlaylist[0], -1);
+}
+
+function setMusicPanelView(name) {
+  const nextName = name === "playlist" ? "playlist" : "lyrics";
+  musicPanelTabs.forEach((button) => {
+    const isActive = button.dataset.musicPanelTab === nextName;
+    button.classList.toggle("is-active", isActive);
+    button.setAttribute("aria-pressed", String(isActive));
+  });
+  musicPanelViews.forEach((view) => {
+    view.hidden = view.dataset.musicPanel !== nextName;
+  });
 }
 
 function padTime(value) {
@@ -729,6 +851,7 @@ function createMusicPlayer(root) {
   let playlist = activeMusicPlaylist;
   let currentIndex = 0;
   let shouldContinue = false;
+  let activeLyricIndex = -1;
 
   const cover = root.querySelector("[data-music-cover]");
   const title = root.querySelector("[data-music-title]");
@@ -767,7 +890,9 @@ function createMusicPlayer(root) {
     const song = playlist[currentIndex] || defaultMusicPlaylist[0];
     if (title) title.textContent = song.title || "未命名音轨";
     if (artist) artist.textContent = song.artist || "未知作者";
-    setLyric(song.note || "");
+    activeLyricIndex = -1;
+    setLyric(song.lyricLines?.length ? song.lyricLines[0].text : song.note || "");
+    renderMusicLyrics(song, -1);
     if (cover) cover.src = song.cover || "assets/avatar.jpg";
     audio.src = song.src || demoUrl;
     audio.load();
@@ -832,6 +957,14 @@ function createMusicPlayer(root) {
     if (current) current.textContent = formatTime(audio.currentTime);
     if (duration) duration.textContent = formatTime(audio.duration);
     if (progress) progress.value = audio.duration ? String((audio.currentTime / audio.duration) * 100) : "0";
+    const song = playlist[currentIndex] || defaultMusicPlaylist[0];
+    const nextLyricIndex = updateActiveMusicLyric(song, audio.currentTime);
+    if (nextLyricIndex !== activeLyricIndex) {
+      activeLyricIndex = nextLyricIndex;
+      setActiveMusicLyric(nextLyricIndex);
+      const activeLine = song.lyricLines?.[nextLyricIndex]?.text;
+      setLyric(activeLine || song.note || "");
+    }
   });
 
   audio.addEventListener("ended", () => playIndex(currentIndex + 1, true));
@@ -851,6 +984,16 @@ function initSimpleMusicPlayers() {
 }
 
 initSimpleMusicPlayers();
+
+musicPanelTabs.forEach((button) => {
+  button.addEventListener("click", () => setMusicPanelView(button.dataset.musicPanelTab));
+});
+
+musicSearchInput?.addEventListener("input", () => {
+  currentMusicSearch = musicSearchInput.value || "";
+  renderMusicTrackList();
+  syncMusicSelection(currentMusicIndex);
+});
 
 authModeButtons.forEach((button) => {
   button.addEventListener("click", () => setAuthMode(button.dataset.authModeButton));

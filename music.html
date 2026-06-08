@@ -1,11 +1,11 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>音乐 | Galois37の完美算术教室</title>
   <meta name="description" content="Galois37 的音乐播放器和歌单。">
-  <link rel="stylesheet" href="styles.css?v=20260607-music-playlist-1">
+  <link rel="stylesheet" href="styles.css?v=20260608-music-netease-song-1">
 </head>
 <body data-page="music">
   <header class="site-header" id="top">
@@ -64,7 +64,26 @@
         <div class="music-bars" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>
       </aside>
 
-      <div class="music-track-list" data-music-list aria-label="歌单列表"></div>
+      <section class="music-side-panel" aria-label="音乐信息">
+        <div class="music-panel-tabs" role="group" aria-label="切换歌词和歌单">
+          <button class="is-active" type="button" data-music-panel-tab="lyrics" aria-pressed="true">歌词</button>
+          <button type="button" data-music-panel-tab="playlist" aria-pressed="false">歌单</button>
+        </div>
+
+        <div class="music-panel-view" data-music-panel="lyrics">
+          <div class="music-lyrics-panel" data-music-lyrics aria-label="歌词">
+            <p class="music-lyrics-empty">纯音乐 无歌词</p>
+          </div>
+        </div>
+
+        <div class="music-panel-view" data-music-panel="playlist" hidden>
+          <label class="music-search">
+            <span aria-hidden="true">⌕</span>
+            <input type="search" data-music-search placeholder="搜索音轨、作者或备注..." aria-label="搜索音轨">
+          </label>
+          <div class="music-track-list" data-music-list aria-label="歌单列表"></div>
+        </div>
+      </section>
     </section>
   </main>
 
@@ -73,8 +92,11 @@
     <a href="#top">回到顶部</a>
   </footer>
 
-  <script src="script.js?v=20260607-music-playlist-1"></script>
+  <script src="script.js?v=20260608-music-netease-song-1"></script>
 </body>
 </html>
+
+
+
 
 
