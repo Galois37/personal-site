@@ -16,8 +16,8 @@ const manualAudioMatches = new Map([
   ["Ref:rain", "Refrain.mp3"],
   ["DESIR", "Arte Refact - DESIR.mp3"],
   ["勾指起誓", "泠鸢yousa - 勾指起誓.mp3"],
-  ["美しい音色で世界が鳴った", "松本文紀 - 美しい音色で世界が鳴った.mp3"],
-  ["夢の歩みを見上げて", "松本文紀 - 夢の歩みを見上げて.mp3"],
+  ["美しい音色で世界が鳴った", "美しい音色で世界が鳴った.wav"],
+  ["夢の歩みを見上げて", "夢の歩みを見上げて.wav"],
   ["After All ～綴る想い～", "After All ～綴る想い～.mp3"],
   ["夏の大三角", "natsu-no-daisankaku.mp3"],
   ["夜の向日葵", "yoru-no-himawari.mp3"],
@@ -88,11 +88,11 @@ async function fetchPlaylistFromNetease() {
 
 function listAudioFiles() {
   return readdirSync(path.join(siteRoot, "assets", "music"))
-    .filter((name) => /\.mp3$/i.test(name))
+    .filter((name) => /\.(mp3|wav|flac|m4a|ogg)$/i.test(name))
     .map((name) => ({
       name,
       src: `assets/music/${name}`,
-      key: normalize(name.replace(/\.mp3$/i, "")),
+      key: normalize(name.replace(/\.(mp3|wav|flac|m4a|ogg)$/i, "")),
     }));
 }
 
