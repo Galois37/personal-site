@@ -244,6 +244,19 @@ function parseLyrics(value) {
     .map((text) => ({ time: null, text }));
 }
 
+function splitLyricText(value) {
+  const [primary, ...secondaryParts] = String(value || "").split(/\s+\/\s+/);
+  return {
+    primary: (primary || "").trim(),
+    secondary: secondaryParts.join(" / ").trim(),
+  };
+}
+
+function lyricPreviewText(value) {
+  const lyric = splitLyricText(value);
+  return [lyric.primary, lyric.secondary].filter(Boolean).join("\n");
+}
+
 function normalizeMusicPlaylist(value) {
   let items = value;
   if (typeof value === "string") {
@@ -295,7 +308,8 @@ function renderMusicLyrics(track, activeIndex = -1) {
 
   musicLyricBoard.innerHTML = lines.map((line, index) => `
     <p class="music-lyric-line ${index === activeIndex ? "is-active" : ""}" data-lyric-line="${index}">
-      ${escapeHtml(line.text)}
+      <span class="music-lyric-original">${escapeHtml(splitLyricText(line.text).primary)}</span>
+      ${splitLyricText(line.text).secondary ? `<span class="music-lyric-translation">${escapeHtml(splitLyricText(line.text).secondary)}</span>` : ""}
     </p>
   `).join("");
 }
@@ -875,7 +889,7 @@ function createMusicPlayer(root) {
 
   const setLyric = (value) => {
     if (!lyric) return;
-    const text = String(value || "").trim();
+    const text = lyricPreviewText(value);
     lyric.textContent = text;
     lyric.hidden = !text;
   };

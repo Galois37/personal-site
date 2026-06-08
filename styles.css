@@ -2004,7 +2004,7 @@ html[data-theme="light"] .music-controls button {
   color: rgba(124, 211, 255, 0.82) !important;
   font-size: 0.82rem !important;
   font-weight: 800;
-  white-space: nowrap;
+  white-space: pre-line;
   overflow: hidden;
   text-overflow: ellipsis;
 }
@@ -2236,6 +2236,8 @@ html[data-theme="light"] .music-controls button {
 }
 
 .music-lyric-line {
+  display: grid;
+  gap: 4px;
   margin: 0;
   color: rgba(233, 239, 255, 0.52);
   font-size: clamp(1rem, 1.8vw, 1.35rem);
@@ -2246,10 +2248,25 @@ html[data-theme="light"] .music-controls button {
   transition: color 180ms ease, transform 180ms ease, text-shadow 180ms ease;
 }
 
+.music-lyric-original,
+.music-lyric-translation {
+  display: block;
+}
+
+.music-lyric-translation {
+  color: rgba(190, 205, 235, 0.62);
+  font-size: 0.82em;
+  line-height: 1.45;
+}
+
 .music-lyric-line.is-active {
   color: #fff;
   transform: scale(1);
   text-shadow: 0 0 18px rgba(124, 211, 255, 0.42);
+}
+
+.music-lyric-line.is-active .music-lyric-translation {
+  color: rgba(226, 236, 255, 0.88);
 }
 
 .music-lyrics-empty {
@@ -2669,6 +2686,14 @@ html[data-theme="light"] .music-lyric-line {
 html[data-theme="light"] .music-lyric-line.is-active {
   color: #33251a;
   text-shadow: 0 0 18px rgba(255, 184, 86, 0.44);
+}
+
+html[data-theme="light"] .music-lyric-translation {
+  color: rgba(89, 64, 42, 0.58);
+}
+
+html[data-theme="light"] .music-lyric-line.is-active .music-lyric-translation {
+  color: rgba(72, 48, 29, 0.82);
 }
 
 html[data-theme="light"] .music-lyrics-empty {
