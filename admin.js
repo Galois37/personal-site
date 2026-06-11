@@ -18,6 +18,7 @@ const musicList = document.querySelector("[data-music-list-admin]");
 const themeToggle = document.querySelector("[data-theme-toggle]");
 const adminTabs = document.querySelectorAll("[data-admin-tab]");
 const adminViews = document.querySelectorAll("[data-admin-view]");
+const adminCurrentTitle = document.querySelector("[data-admin-current-title]");
 const deployButton = document.querySelector("[data-deploy-button]");
 const deployStatus = document.querySelector("[data-deploy-status]");
 
@@ -89,6 +90,17 @@ nku 数院大一在读，也是成分复杂的地球 online 玩家。
 
 let currentSettings = { ...defaultSettings };
 
+const adminViewTitles = {
+  overview: "全息仪表盘",
+  settings: "系统文案核心",
+  content: "笔记与项目",
+  friends: "神经友链",
+  moments: "说说发布台",
+  music: "云端乐律",
+  messages: "提问箱管理",
+  comments: "评论区管理",
+};
+
 function setStatus(form, text) {
   const status = form?.querySelector(".form-status");
   if (status) status.textContent = text;
@@ -131,6 +143,7 @@ applyTheme(initialTheme());
 function setAdminView(name) {
   const hasView = [...adminViews].some((view) => view.dataset.adminView === name);
   const viewName = hasView ? name : "overview";
+  if (adminCurrentTitle) adminCurrentTitle.textContent = adminViewTitles[viewName] || "站点管理";
   adminTabs.forEach((tab) => {
     const isActive = tab.dataset.adminTab === viewName;
     tab.classList.toggle("is-active", isActive);
@@ -505,6 +518,21 @@ function friendAvatar(url, title, version) {
   return `<span class="admin-friend-avatar admin-friend-placeholder">${escapeHtml((title || "友").slice(0, 1))}</span>`;
 }
 
+function friendAdminPreview(item) {
+  const cleanUrl = String(item.url || "").replace(/^https?:\/\//, "").replace(/\/$/, "");
+  return `
+    <div class="admin-friend-preview">
+      ${friendAvatar(item.label, item.title, item.updated_at || item.id)}
+      <div>
+        <span><i></i> ONLINE</span>
+        <strong>${escapeHtml(item.title || "未命名友链")}</strong>
+        <p>${escapeHtml(item.description || "这个朋友还没有写简介。")}</p>
+        ${cleanUrl ? `<small>${escapeHtml(cleanUrl)}</small>` : ""}
+      </div>
+    </div>
+  `;
+}
+
 function renderFriendItems(items) {
   if (!friendsList) return;
   const friends = items.filter((item) => item.type === "friend");
@@ -523,6 +551,7 @@ function renderFriendItems(items) {
         </div>
         <time>${escapeHtml(item.created_at || "")}</time>
       </div>
+      ${friendAdminPreview(item)}
       <label>站点名<input type="text" name="title" value="${escapeHtml(item.title || "")}"></label>
       <label>链接<input type="url" name="url" value="${escapeHtml(item.url || "")}"></label>
       <label>头像<input type="text" name="label" value="${escapeHtml(item.label || "")}"></label>
@@ -611,6 +640,24 @@ function momentPreviewImages(value, alt) {
   )).join("")}</div>`;
 }
 
+function momentAdminPreview(item) {
+  const author = item.author_name || "Galois37的猫猫";
+  const background = item.background_url ? ` style="--moment-bg: url('${escapeHtml(item.background_url)}')"` : "";
+  return `
+    <div class="admin-moment-preview"${background}>
+      <div class="admin-moment-preview-head">
+        <img class="admin-friend-avatar" src="assets/avatar.jpg" alt="" loading="lazy">
+        <div>
+          <strong>${escapeHtml(author)}</strong>
+          <time>${escapeHtml(String(item.created_at || "").slice(0, 16).replace("T", " "))}</time>
+        </div>
+      </div>
+      <p>${escapeHtml(item.content || "还没有正文。")}</p>
+      ${momentPreviewImages(item.image_url, item.content)}
+    </div>
+  `;
+}
+
 function renderMomentItems(items) {
   if (!momentsList) return;
   if (!items.length) {
@@ -627,7 +674,7 @@ function renderMomentItems(items) {
         </div>
         <time>${escapeHtml(item.created_at || "")}</time>
       </div>
-      ${momentPreviewImages(item.image_url, item.content)}
+      ${momentAdminPreview(item)}
       <label>
         发布身份
         <select name="authorName">

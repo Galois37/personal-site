@@ -152,6 +152,22 @@ function assetUrlWithVersion(url, version) {
   return imageUrlWithVersion(normalized, version);
 }
 
+async function copyTextToClipboard(text) {
+  if (navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(text);
+    return;
+  }
+  const textarea = document.createElement("textarea");
+  textarea.value = text;
+  textarea.setAttribute("readonly", "");
+  textarea.style.position = "fixed";
+  textarea.style.inset = "0 auto auto -9999px";
+  document.body.append(textarea);
+  textarea.select();
+  document.execCommand("copy");
+  textarea.remove();
+}
+
 function applyTheme(theme) {
   const nextTheme = theme === "light" ? "light" : "dark";
   document.documentElement.dataset.theme = nextTheme;
@@ -171,11 +187,19 @@ applyTheme(initialTheme());
 updateRuntimeClock();
 setInterval(updateRuntimeClock, 1000);
 
+function formatQaDate(value) {
+  if (!value) return "";
+  const raw = String(value);
+  const datePart = raw.slice(0, 10).replace(/-/g, ".");
+  const timePart = raw.includes("T") ? raw.slice(11, 16) : raw.slice(11, 16);
+  return timePart ? `${datePart} ${timePart}` : datePart;
+}
+
 function renderMessages(target, items, emptyTitle, emptyText) {
   if (!target) return;
   if (!items.length) {
     target.innerHTML = `
-      <article>
+      <article class="qa-item qa-empty">
         <strong>${escapeHtml(emptyTitle)}</strong>
         <p>${escapeHtml(emptyText)}</p>
       </article>
@@ -183,18 +207,24 @@ function renderMessages(target, items, emptyTitle, emptyText) {
     return;
   }
 
-  target.innerHTML = items.map((item) => `
-    <article class="qa-item">
-      <div class="qa-question">
-        <strong>${escapeHtml(item.name || "匿名用户")} ${ownerBadge(item.role)}提问</strong>
-        <p>${escapeHtml(item.message || "")}</p>
-      </div>
-      <div class="qa-answer">
-        <strong>${ownerDisplayName} ${ownerBadge("owner")}回答</strong>
-        <p>${escapeHtml(item.answer || "")}</p>
-      </div>
-    </article>
-  `).join("");
+  target.innerHTML = items.map((item) => {
+    const askedAt = formatQaDate(item.created_at);
+    return `
+      <article class="qa-item">
+        <div class="qa-question">
+          <div class="qa-line">
+            <strong>${escapeHtml(item.name || "匿名用户")} ${ownerBadge(item.role)}提问</strong>
+            ${askedAt ? `<time class="qa-meta" datetime="${escapeHtml(item.created_at || "")}">${escapeHtml(askedAt)}</time>` : ""}
+          </div>
+          <p>${escapeHtml(item.message || "")}</p>
+        </div>
+        <div class="qa-answer">
+          <strong>${ownerDisplayName} ${ownerBadge("owner")}回答</strong>
+          <p>${escapeHtml(item.answer || "")}</p>
+        </div>
+      </article>
+    `;
+  }).join("");
 }
 
 function ownerBadge(role) {
@@ -532,28 +562,37 @@ function renderContentItem(item, pageType) {
   const description = escapeHtml(item.description || "");
   const url = escapeHtml(assetUrlWithVersion(item.url || "#", item.updated_at || item.id));
   const linkText = item.type === "note" ? "打开 PDF" : "打开链接";
+  const createdAt = escapeHtml(item.created_at || "");
+  const dateText = escapeHtml((item.created_at || "").slice(0, 10) || "长期维护中");
+  const statusText = item.type === "note" ? "长期连载中" : "长期展示中";
   if (pageType === "notes") {
     return `
-      <article class="note-item">
-        <time datetime="${escapeHtml(item.created_at || "")}">${escapeHtml(item.status === "visible" ? "长期连载中" : item.status)}</time>
-        <div>
+      <article class="note-item content-card">
+        <time class="content-date" datetime="${createdAt}">${escapeHtml(item.status === "visible" ? statusText : item.status)}</time>
+        <div class="content-body">
           <span class="tag">${label}</span>
           <h2>${title}</h2>
           <p>${description}</p>
-          <a class="note-link" href="${url}" target="_blank" rel="noreferrer">${linkText}</a>
+          <div class="content-actions">
+            <a class="note-link" href="${url}" target="_blank" rel="noreferrer">${linkText}</a>
+            <span>${dateText}</span>
+          </div>
         </div>
       </article>
     `;
   }
   return `
-    <article class="article-card">
-      <div>
+    <article class="article-card content-card">
+      <div class="content-body">
         <span class="tag">${label}</span>
         <h2>${title}</h2>
         <p>${description}</p>
-        <a class="note-link" href="${url}" target="_blank" rel="noreferrer">${linkText}</a>
+        <div class="content-actions">
+          <a class="note-link" href="${url}" target="_blank" rel="noreferrer">${linkText}</a>
+          <span>${dateText}</span>
+        </div>
       </div>
-      <time datetime="${escapeHtml(item.created_at || "")}">长期展示中</time>
+      <time class="content-date" datetime="${createdAt}">${statusText}</time>
     </article>
   `;
 }
@@ -649,13 +688,13 @@ function renderArchive(items) {
     return;
   }
   archiveBoard.innerHTML = visibleItems.map((item) => `
-    <article class="archive-item">
+    <article class="archive-item content-card">
       <time datetime="${escapeHtml(item.created_at || "")}">${escapeHtml((item.created_at || "").slice(0, 10) || "未记录")}</time>
-      <div>
+      <div class="content-body">
         <span class="tag">${escapeHtml(contentTypeName(item.type))}</span>
         <h2>${escapeHtml(item.title || "")}</h2>
         <p>${escapeHtml(item.description || "")}</p>
-        ${item.url ? `<a class="note-link" href="${escapeHtml(item.url)}" target="_blank" rel="noreferrer">打开链接</a>` : ""}
+        ${item.url ? `<div class="content-actions"><a class="note-link" href="${escapeHtml(assetUrlWithVersion(item.url, item.updated_at || item.id))}" target="_blank" rel="noreferrer">打开链接</a></div>` : ""}
       </div>
     </article>
   `).join("");
@@ -670,7 +709,10 @@ function splitImageUrls(value) {
 
 function formatMomentDate(value) {
   if (!value) return "刚刚";
-  return String(value).slice(0, 10).replace(/-/g, ".");
+  const raw = String(value);
+  const datePart = raw.slice(0, 10).replace(/-/g, ".");
+  const timePart = raw.includes("T") ? raw.slice(11, 16) : raw.slice(11, 16);
+  return timePart ? `${datePart} ${timePart}` : datePart;
 }
 
 function renderMoments(items) {
@@ -682,6 +724,7 @@ function renderMoments(items) {
   momentsBoard.innerHTML = items.map((item) => {
     const imageUrls = splitImageUrls(item.image_url);
     const authorName = item.author_name || "Galois37的猫猫";
+    const ownerBadge = authorName === "Galois37的猫猫" ? `<span class="owner-mini-badge">站长认证</span>` : "";
     const background = item.background_url
       ? ` style="--moment-bg: url('${escapeHtml(item.background_url)}')"`
       : "";
@@ -690,7 +733,7 @@ function renderMoments(items) {
       <header class="moment-head">
         <img class="moment-avatar" src="assets/avatar.jpg" alt="${escapeHtml(authorName)} 的头像" loading="lazy">
         <div>
-          <strong>${escapeHtml(authorName)}</strong>
+          <strong>${escapeHtml(authorName)}${ownerBadge}</strong>
           <time datetime="${escapeHtml(item.created_at || "")}">${escapeHtml(formatMomentDate(item.created_at))}</time>
         </div>
       </header>
@@ -700,6 +743,10 @@ function renderMoments(items) {
       ${imageUrls.length ? `<div class="moment-gallery" data-count="${imageUrls.length}">${imageUrls.map((url, index) => (
         `<img class="moment-image" src="${escapeHtml(url)}" alt="说说配图 ${index + 1}" loading="lazy">`
       )).join("")}</div>` : ""}
+      <footer class="moment-foot">
+        <span>Galois37's Room</span>
+        <span>评论功能施工中</span>
+      </footer>
     </article>
   `;
   }).join("");
@@ -735,6 +782,7 @@ function renderFriends(items) {
         <strong>${escapeHtml(item.title || "")}</strong>
         <span>${escapeHtml(item.description || "这个朋友还没有写简介。")}</span>
       </span>
+      <span class="friend-link-text">${escapeHtml((item.url || "").replace(/^https?:\/\//, "").replace(/\/$/, ""))}</span>
       <span class="friend-arrow" aria-hidden="true">↗</span>
     </a>
   `).join("");
@@ -1033,6 +1081,18 @@ globalMusicAudio.addEventListener("error", () => {
 function bindCurrentPageEvents() {
   pageAbortController?.abort();
   pageAbortController = new AbortController();
+
+  const copyFriendButton = document.querySelector("[data-copy-friend-template]");
+  addPageListener(copyFriendButton, "click", async () => {
+    const template = document.querySelector("[data-friend-template]");
+    const status = document.querySelector("[data-copy-friend-status]");
+    try {
+      await copyTextToClipboard(template?.textContent?.trim() || "");
+      if (status) status.textContent = "已复制，可以直接发给想交换友链的站长。";
+    } catch {
+      if (status) status.textContent = "复制失败，可以手动选中上方文字复制。";
+    }
+  });
 
   musicPanelTabs.forEach((button) => {
     addPageListener(button, "click", () => setMusicPanelView(button.dataset.musicPanelTab));

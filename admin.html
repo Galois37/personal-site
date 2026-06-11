@@ -1,11 +1,11 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>控制台 | Galois37の完美算术教室</title>
   <meta name="description" content="Galois37 网站控制台。">
-  <link rel="stylesheet" href="styles.css?v=20260609-pjax-music-1">
+  <link rel="stylesheet" href="styles.css?v=20260611-stage8-admin-1">
 </head>
 <body data-page="admin">
   <main class="admin-shell">
@@ -24,24 +24,40 @@
     </section>
 
     <section class="admin-dashboard" data-admin-dashboard hidden>
-      <div class="section-title">
-        <p class="eyebrow">Dashboard</p>
-        <h1>站点管理</h1>
-        <button class="theme-toggle admin-theme-toggle" type="button" data-theme-toggle aria-label="切换白天模式和黑夜模式" title="切换主题">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v2M12 19v2M5.64 5.64l1.42 1.42M16.95 16.95l1.41 1.41M3 12h2M19 12h2M5.64 18.36l1.42-1.42M16.95 7.05l1.41-1.41"/><circle cx="12" cy="12" r="4"/></svg>
-        </button>
-      </div>
+      <aside class="admin-sidebar" aria-label="控制台侧边栏">
+        <div class="admin-profile-card">
+          <img src="assets/avatar.jpg" alt="Galois37 的头像">
+          <div>
+            <strong>Galois37的猫猫</strong>
+            <span>CMS Administrator</span>
+          </div>
+        </div>
 
-      <nav class="admin-tabs" aria-label="控制台分区">
-        <button type="button" class="is-active" data-admin-tab="overview">概览</button>
-        <button type="button" data-admin-tab="settings">文案</button>
-        <button type="button" data-admin-tab="content">内容</button>
-        <button type="button" data-admin-tab="friends">友链</button>
-        <button type="button" data-admin-tab="moments">说说</button>
-        <button type="button" data-admin-tab="music">音乐</button>
-        <button type="button" data-admin-tab="messages">提问</button>
-        <button type="button" data-admin-tab="comments">评论</button>
-      </nav>
+        <nav class="admin-tabs" aria-label="控制台分区">
+          <button type="button" class="is-active" data-admin-tab="overview"><span>OV</span>概览</button>
+          <button type="button" data-admin-tab="settings"><span>TX</span>文案</button>
+          <button type="button" data-admin-tab="content"><span>CT</span>内容</button>
+          <button type="button" data-admin-tab="friends"><span>FR</span>友链</button>
+          <button type="button" data-admin-tab="moments"><span>MO</span>说说</button>
+          <button type="button" data-admin-tab="music"><span>MU</span>音乐</button>
+          <button type="button" data-admin-tab="messages"><span>QA</span>提问</button>
+          <button type="button" data-admin-tab="comments"><span>CM</span>评论</button>
+        </nav>
+      </aside>
+
+      <div class="admin-workspace">
+        <header class="admin-topbar">
+          <div>
+            <p class="eyebrow">Dashboard</p>
+            <h1 data-admin-current-title>站点管理</h1>
+          </div>
+          <div class="admin-topbar-actions">
+            <button class="theme-toggle admin-theme-toggle" type="button" data-theme-toggle aria-label="切换白天模式和黑夜模式" title="切换主题">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v2M12 19v2M5.64 5.64l1.42 1.42M16.95 16.95l1.41 1.41M3 12h2M19 12h2M5.64 18.36l1.42-1.42M16.95 7.05l1.41-1.41"/><circle cx="12" cy="12" r="4"/></svg>
+            </button>
+            <button class="button primary admin-deploy-main" type="button" data-deploy-button>全部上传并部署</button>
+          </div>
+        </header>
 
       <section class="section admin-section admin-view" data-admin-view="overview">
         <h2>概览</h2>
@@ -61,8 +77,7 @@
         </article>
         <article class="glass-card">
           <h2>一键部署</h2>
-          <p>触发 GitHub Actions 重新部署当前仓库版本。</p>
-          <button class="button primary" type="button" data-deploy-button>触发部署</button>
+          <p>触发 GitHub Actions 重新部署当前仓库版本。顶部按钮和这里的说明对应同一个部署流程。</p>
           <p class="form-status" data-deploy-status role="status" aria-live="polite"></p>
         </article>
         </div>
@@ -238,17 +253,10 @@
         <p class="aside-text">这里之后会管理讨论区评论。目前可以查看和删除已经保存的评论。</p>
         <div class="admin-list" data-comments-list></div>
       </section>
+      </div>
     </section>
   </main>
 
-  <script src="admin.js?v=20260609-pjax-music-1"></script>
+  <script src="admin.js?v=20260611-stage8-admin-1"></script>
 </body>
 </html>
-
-
-
-
-
-
-
-
