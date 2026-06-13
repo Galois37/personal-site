@@ -65,6 +65,18 @@ function addPageListener(target, eventName, handler) {
   target?.addEventListener(eventName, handler, { signal: pageAbortController?.signal });
 }
 
+async function fetchJsonWithTimeout(url, options = {}, timeoutMs = 2400) {
+  const controller = new AbortController();
+  const timer = window.setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetch(url, { ...options, signal: controller.signal });
+    const result = await response.json().catch(() => ({}));
+    return { response, result };
+  } finally {
+    window.clearTimeout(timer);
+  }
+}
+
 refreshDomRefs();
 
 const defaultMusicPlaylist = [
@@ -110,8 +122,78 @@ const defaultSettings = {
   "rooms.notesTitle": "37的数学笔记",
   "rooms.articlesTitle": "数学之外のmeta",
   "rooms.askTitle": "提问箱与讨论区",
+  "pages.notesDescription": "这里存放长期连载中的数学笔记。当前以 PDF 形式公开，后续可以逐步拆成网页专题。",
+  "pages.articlesDescription": "这里放文章、杂谈、小程序和一些不太适合归进正式笔记里的东西。",
+  "pages.askDescription": "无需登录即可提问，站长会筛选一部分问题公开。\n登录可开启私人回复功能，同时可以体验后续开发的一些玩法\n——那就，战个未来吧！",
+  "pages.archiveDescription": "按时间收纳公开的笔记、项目、文章、资源和说说。",
+  "pages.momentsDescription": "短动态、碎碎念、近况和一些不必写成文章的小记录。",
+  "pages.friendsDescription": "存放朋友的网站、喜欢的个人站和想长期保留的网络角落。",
+  "pages.musicDescription": "在这里播放和切换站点歌单。",
+  "pages.resourcesDescription": "这里收集一些常用网页、学习资料、工具和资源入口。内容可以在控制台里用 resource 类型维护。",
+  "pages.matchDescription": "这个页面先作为功能预留。之后可以做成问卷、打分器，或者随机生成你和 Galois37 的兴趣契合度报告。",
   "music.playlist": JSON.stringify(defaultMusicPlaylist, null, 2),
 };
+
+const contentCoverOverridesByTitle = {
+  "从 p 进数到 Tate Thesis": "assets/content-covers/note-tate.jpg",
+  "Analysis": "assets/content-covers/note-analysis.jpg",
+  "实用链接与资源库": "assets/content-covers/project-resources.jpg",
+  "数学 MBTI 测试": "assets/content-covers/project-math-mbti.jpg",
+};
+
+const replaceableContentCovers = new Set([
+  "assets/room-notes.jpg",
+  "assets/home-bg-2.jpg",
+  "assets/home-bg-1.jpg",
+  "assets/room-articles.jpg",
+]);
+
+const defaultContentItems = [
+  {
+    id: "static-note-tate",
+    type: "note",
+    title: "从 p 进数到 Tate Thesis",
+    description: "长期连载中的数学笔记。",
+    url: "assets/notes/p-adic-to-tate-thesis.pdf",
+    label: "PDF|assets/content-covers/note-tate.jpg",
+    status: "visible",
+    created_at: "2026-06-02 15:49:42",
+    updated_at: "2026-06-05-pdf-deploy-1",
+  },
+  {
+    id: "static-note-analysis",
+    type: "note",
+    title: "Analysis",
+    description: "长期连载中的分析笔记。",
+    url: "assets/notes/analysis.pdf",
+    label: "PDF|assets/content-covers/note-analysis.jpg",
+    status: "visible",
+    created_at: "2026-06-02 15:49:44",
+    updated_at: "2026-06-05-pdf-deploy-1",
+  },
+  {
+    id: "static-resource-library",
+    type: "resource",
+    title: "实用链接与资源库",
+    description: "常用网页、学习资料、工具入口和资源库。",
+    url: "resources.html",
+    label: "Resource|assets/content-covers/project-resources.jpg",
+    status: "visible",
+    created_at: "2026-06-03 10:00:00",
+    updated_at: "2026-06-03",
+  },
+  {
+    id: "static-math-mbti",
+    type: "program",
+    title: "数学 MBTI 测试",
+    description: "一个用于测试数学人格类型的小项目。",
+    url: "https://galois37.github.io/math.mbti-test/",
+    label: "Program|assets/content-covers/project-math-mbti.jpg",
+    status: "visible",
+    created_at: "2026-06-02 15:49:46",
+    updated_at: "2026-06-02",
+  },
+];
 
 let runtimeConfig = {
   onlineSince: new Date(defaultSettings["site.onlineSince"]).getTime(),
@@ -150,6 +232,43 @@ function assetUrlWithVersion(url, version) {
   if (!normalized || normalized === "#") return normalized || "#";
   if (/^(https?:|mailto:|tencent:)/i.test(normalized)) return normalized;
   return imageUrlWithVersion(normalized, version);
+}
+
+function defaultContentCover(type) {
+  if (type === "note") return "assets/room-notes.jpg";
+  if (type === "program") return "assets/room-articles.jpg";
+  if (type === "resource") return "assets/home-bg-1.jpg";
+  if (type === "article") return "assets/room-ask.jpg";
+  return "assets/home-bg-2.jpg";
+}
+
+function looksLikeImagePath(value) {
+  return /\.(png|jpe?g|webp|gif|avif|svg)(\?.*)?$/i.test(String(value || "").trim());
+}
+
+function normalizeImagePath(value) {
+  return String(value || "").trim().replace(/\\/g, "/");
+}
+
+function parseContentMeta(item) {
+  const raw = String(item.label || "").trim();
+  const parts = raw.split("|").map((part) => part.trim()).filter(Boolean);
+  const first = normalizeImagePath(parts[0] || "");
+  const packedCover = normalizeImagePath(parts.length > 1 ? parts.slice(1).join("|") : "");
+  const directCover = normalizeImagePath(item.image_url || item.cover_url || item.cover || "");
+  const firstIsImage = looksLikeImagePath(first);
+  const label = firstIsImage ? "" : first;
+  const overrideCover = contentCoverOverridesByTitle[String(item.title || "").trim()] || "";
+  const packedCanBeReplaced = !packedCover || replaceableContentCovers.has(packedCover);
+  const cover = directCover
+    || (overrideCover && packedCanBeReplaced ? overrideCover : packedCover)
+    || (firstIsImage ? first : "")
+    || overrideCover
+    || defaultContentCover(item.type);
+  return {
+    label: label || (item.type === "note" ? "PDF" : item.type === "resource" ? "Resource" : item.type === "article" ? "Article" : "Program"),
+    cover,
+  };
 }
 
 async function copyTextToClipboard(text) {
@@ -510,18 +629,58 @@ function renderRichText(target, value) {
     .join("");
 }
 
+function applySettingTextNodes(data) {
+  document.querySelectorAll("[data-setting-text]").forEach((node) => {
+    const key = node.dataset.settingText;
+    const value = data[key];
+    if (value == null || value === "") return;
+    if (node.dataset.settingFormat === "lines") {
+      node.innerHTML = escapeHtml(value).replace(/\n/g, "<br>");
+      return;
+    }
+    node.textContent = value;
+  });
+}
+
+function matchActionMarkup() {
+  return `
+    <span class="match-inline-wrap">
+      <button class="button secondary inline-button" type="button" data-match-placeholder>成分重合度测试</button>
+      <span class="match-inline-hint" data-match-hint hidden>该功能还待主人开发喵~</span>
+    </span>
+  `;
+}
+
+function ensureMatchAction() {
+  const target = document.querySelector("[data-about-bio]");
+  if (!target || target.querySelector("[data-match-placeholder]")) return;
+  const anchor = target.querySelector("[data-match-action-anchor]");
+  if (anchor) {
+    anchor.outerHTML = matchActionMarkup();
+    return;
+  }
+  const marker = Array.from(target.querySelectorAll("li, p"))
+    .find((node) => node.textContent.includes("成分重合度"));
+  if (marker) {
+    marker.insertAdjacentHTML("afterend", matchActionMarkup());
+  } else {
+    target.insertAdjacentHTML("beforeend", matchActionMarkup());
+  }
+}
+
 function applySettings(settings) {
   const data = { ...defaultSettings, ...settings };
   configureRuntime(data);
   configureMusicPlaylist(data["music.playlist"]);
+  applySettingTextNodes(data);
   const siteName = data["site.name"];
   setText(".brand span:last-child", siteName);
   if (document.body.dataset.page === "home") document.title = siteName;
   setText("#home-title", siteName);
   setText(".home-persona-head h2", data["home.nickname"]);
   setText(".profile-line", data["home.subtitle"]);
-  setText(".about-hero p:not(.eyebrow)", data["about.quote"]);
   renderRichText(document.querySelector("[data-about-bio]"), data["about.bio"]);
+  ensureMatchAction();
 
   setHref(".zhihu-link, .social-card[href*='zhihu.com']", data["social.zhihu"]);
   setHref(".xhs-link, .social-card[href*='xhslink.com']", data["social.xhs"]);
@@ -542,22 +701,24 @@ function applySettings(settings) {
   if (document.body.dataset.page === "notes") setText(".page-hero h1", data["rooms.notesTitle"]);
   if (document.body.dataset.page === "articles") setText(".page-hero h1", data["rooms.articlesTitle"]);
   if (document.body.dataset.page === "ask") setText(".page-hero h1", data["rooms.askTitle"]);
+  ensureMatchAction();
 }
 
 async function loadSettings() {
   try {
-    const response = await fetch("/api/settings");
-    const result = await response.json().catch(() => ({}));
+    const { response, result } = await fetchJsonWithTimeout("/api/settings", {}, 1800);
     if (response.ok) {
       cachedSettings = result.settings || {};
       applySettings(cachedSettings);
     }
   } catch {
+    cachedSettings = cachedSettings || {};
   }
 }
 
 function renderContentItem(item, pageType) {
-  const label = escapeHtml(item.label || (item.type === "note" ? "PDF" : "Program"));
+  const meta = parseContentMeta(item);
+  const label = escapeHtml(meta.label);
   const title = escapeHtml(item.title || "");
   const description = escapeHtml(item.description || "");
   const url = escapeHtml(assetUrlWithVersion(item.url || "#", item.updated_at || item.id));
@@ -565,12 +726,18 @@ function renderContentItem(item, pageType) {
   const createdAt = escapeHtml(item.created_at || "");
   const dateText = escapeHtml((item.created_at || "").slice(0, 10) || "长期维护中");
   const statusText = item.type === "note" ? "长期连载中" : "长期展示中";
+  const cover = escapeHtml(assetUrlWithVersion(meta.cover, item.updated_at || item.id));
   if (pageType === "notes") {
     return `
-      <article class="note-item content-card">
-        <time class="content-date" datetime="${createdAt}">${escapeHtml(item.status === "visible" ? statusText : item.status)}</time>
+      <article class="note-item content-card visual-content-card">
+        <a class="content-cover" href="${url}" target="_blank" rel="noreferrer" aria-label="${title}">
+          <img src="${cover}" alt="" loading="lazy">
+        </a>
         <div class="content-body">
-          <span class="tag">${label}</span>
+          <div class="content-meta-line">
+            <span class="tag">${label}</span>
+            <time class="content-date" datetime="${createdAt}">${escapeHtml(item.status === "visible" ? statusText : item.status)}</time>
+          </div>
           <h2>${title}</h2>
           <p>${description}</p>
           <div class="content-actions">
@@ -582,9 +749,15 @@ function renderContentItem(item, pageType) {
     `;
   }
   return `
-    <article class="article-card content-card">
+    <article class="article-card content-card visual-content-card">
+      <a class="content-cover" href="${url}" target="_blank" rel="noreferrer" aria-label="${title}">
+        <img src="${cover}" alt="" loading="lazy">
+      </a>
       <div class="content-body">
-        <span class="tag">${label}</span>
+        <div class="content-meta-line">
+          <span class="tag">${label}</span>
+          <time class="content-date" datetime="${createdAt}">${statusText}</time>
+        </div>
         <h2>${title}</h2>
         <p>${description}</p>
         <div class="content-actions">
@@ -592,7 +765,6 @@ function renderContentItem(item, pageType) {
           <span>${dateText}</span>
         </div>
       </div>
-      <time class="content-date" datetime="${createdAt}">${statusText}</time>
     </article>
   `;
 }
@@ -645,7 +817,7 @@ function renderResources(items) {
   }
 
   const groups = items.reduce((map, item) => {
-    const label = item.label || "未分类";
+    const label = parseContentMeta(item).label || "未分类";
     if (!map.has(label)) map.set(label, []);
     map.get(label).push(item);
     return map;
@@ -659,7 +831,8 @@ function renderResources(items) {
       </div>
       <div class="resource-grid">
         ${entries.map((item) => `
-          <a class="glass-card resource-card" href="${escapeHtml(item.url || "#")}" target="_blank" rel="noreferrer">
+          <a class="glass-card resource-card visual-resource-card" href="${escapeHtml(item.url || "#")}" target="_blank" rel="noreferrer" style="--resource-cover: url('${escapeHtml(assetUrlWithVersion(parseContentMeta(item).cover, item.updated_at || item.id))}')">
+            <span class="resource-card-shade"></span>
             <strong>${escapeHtml(item.title)}</strong>
             <p>${escapeHtml(item.description || "")}</p>
           </a>
@@ -688,10 +861,15 @@ function renderArchive(items) {
     return;
   }
   archiveBoard.innerHTML = visibleItems.map((item) => `
-    <article class="archive-item content-card">
-      <time datetime="${escapeHtml(item.created_at || "")}">${escapeHtml((item.created_at || "").slice(0, 10) || "未记录")}</time>
+    <article class="archive-item content-card visual-content-card">
+      <a class="content-cover" href="${escapeHtml(item.url ? assetUrlWithVersion(item.url, item.updated_at || item.id) : "#")}" target="_blank" rel="noreferrer" aria-label="${escapeHtml(item.title || "")}">
+        <img src="${escapeHtml(assetUrlWithVersion(parseContentMeta(item).cover, item.updated_at || item.id))}" alt="" loading="lazy">
+      </a>
       <div class="content-body">
-        <span class="tag">${escapeHtml(contentTypeName(item.type))}</span>
+        <div class="content-meta-line">
+          <span class="tag">${escapeHtml(contentTypeName(item.type))}</span>
+          <time datetime="${escapeHtml(item.created_at || "")}">${escapeHtml(formatQaDate(item.created_at) || (item.created_at || "").slice(0, 10) || "未记录")}</time>
+        </div>
         <h2>${escapeHtml(item.title || "")}</h2>
         <p>${escapeHtml(item.description || "")}</p>
         ${item.url ? `<div class="content-actions"><a class="note-link" href="${escapeHtml(assetUrlWithVersion(item.url, item.updated_at || item.id))}" target="_blank" rel="noreferrer">打开链接</a></div>` : ""}
@@ -797,32 +975,35 @@ async function loadContentItems() {
       : null;
   if (!list && !resourceBoard && !archiveBoard && !friendsBoard && pageType !== "home") return;
 
+  let allItems = defaultContentItems;
   try {
-    const response = await fetch("/api/content-items");
-    const result = await response.json().catch(() => ({}));
-    if (!response.ok) return;
-    const allItems = result.items || [];
-    updateHomeStats(allItems);
-    if (resourceBoard) {
-      renderResources(allItems.filter((item) => item.type === "resource"));
-      return;
-    }
-    if (archiveBoard) {
-      renderArchive(allItems);
-      return;
-    }
-    if (friendsBoard) {
-      renderFriends(allItems);
-      return;
-    }
-    const items = allItems.filter((item) => (
-      pageType === "notes" ? item.type === "note" : item.type === "article" || item.type === "program"
-    ));
-    if (items.length) {
-      const staticResourceCard = pageType === "articles" ? list.querySelector(".resource-entry")?.outerHTML || "" : "";
-      list.innerHTML = `${staticResourceCard}${items.map((item) => renderContentItem(item, pageType)).join("")}`;
+    const { response, result } = await fetchJsonWithTimeout("/api/content-items", {}, 2200);
+    if (response.ok && Array.isArray(result.items) && result.items.length) {
+      allItems = result.items;
     }
   } catch {
+    allItems = defaultContentItems;
+  }
+
+  updateHomeStats(allItems);
+  if (resourceBoard) {
+    renderResources(allItems.filter((item) => item.type === "resource"));
+    return;
+  }
+  if (archiveBoard) {
+    renderArchive(allItems);
+    return;
+  }
+  if (friendsBoard) {
+    renderFriends(allItems);
+    return;
+  }
+  const items = allItems.filter((item) => (
+    pageType === "notes" ? item.type === "note" : item.type === "article" || item.type === "program"
+  ));
+  if (items.length && list) {
+    const staticResourceCard = pageType === "articles" ? list.querySelector(".resource-entry")?.outerHTML || "" : "";
+    list.innerHTML = `${staticResourceCard}${items.map((item) => renderContentItem(item, pageType)).join("")}`;
   }
 }
 
@@ -1270,6 +1451,16 @@ function bindShellEvents() {
 
   document.addEventListener("click", (event) => {
     if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    const matchButton = event.target instanceof Element ? event.target.closest("[data-match-placeholder]") : null;
+    if (matchButton) {
+      event.preventDefault();
+      const hint = matchButton.closest(".match-inline-wrap")?.querySelector("[data-match-hint]");
+      if (hint) {
+        hint.hidden = false;
+        hint.classList.add("is-visible");
+      }
+      return;
+    }
     const anchor = event.target instanceof Element ? event.target.closest("a") : null;
     if (!isRoutablePageLink(anchor)) return;
     event.preventDefault();

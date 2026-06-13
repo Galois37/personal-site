@@ -85,6 +85,15 @@ nku 数院大一在读，也是成分复杂的地球 online 玩家。
   "rooms.notesTitle": "37的数学笔记",
   "rooms.articlesTitle": "数学之外のmeta",
   "rooms.askTitle": "提问箱与讨论区",
+  "pages.notesDescription": "这里存放长期连载中的数学笔记。当前以 PDF 形式公开，后续可以逐步拆成网页专题。",
+  "pages.articlesDescription": "这里放文章、杂谈、小程序和一些不太适合归进正式笔记里的东西。",
+  "pages.askDescription": "无需登录即可提问，站长会筛选一部分问题公开。\n登录可开启私人回复功能，同时可以体验后续开发的一些玩法\n——那就，战个未来吧！",
+  "pages.archiveDescription": "按时间收纳公开的笔记、项目、文章、资源和说说。",
+  "pages.momentsDescription": "短动态、碎碎念、近况和一些不必写成文章的小记录。",
+  "pages.friendsDescription": "存放朋友的网站、喜欢的个人站和想长期保留的网络角落。",
+  "pages.musicDescription": "在这里播放和切换站点歌单。",
+  "pages.resourcesDescription": "这里收集一些常用网页、学习资料、工具和资源入口。内容可以在控制台里用 resource 类型维护。",
+  "pages.matchDescription": "这个页面先作为功能预留。之后可以做成问卷、打分器，或者随机生成你和 Galois37 的兴趣契合度报告。",
   "music.playlist": JSON.stringify(defaultMusicPlaylist, null, 2),
 };
 
@@ -100,6 +109,20 @@ const adminViewTitles = {
   messages: "提问箱管理",
   comments: "评论区管理",
 };
+
+const contentCoverOverridesByTitle = {
+  "从 p 进数到 Tate Thesis": "assets/content-covers/note-tate.jpg",
+  "Analysis": "assets/content-covers/note-analysis.jpg",
+  "实用链接与资源库": "assets/content-covers/project-resources.jpg",
+  "数学 MBTI 测试": "assets/content-covers/project-math-mbti.jpg",
+};
+
+const replaceableContentCovers = new Set([
+  "assets/room-notes.jpg",
+  "assets/home-bg-2.jpg",
+  "assets/home-bg-1.jpg",
+  "assets/room-articles.jpg",
+]);
 
 function setStatus(form, text) {
   const status = form?.querySelector(".form-status");
@@ -121,6 +144,57 @@ function imageUrlWithVersion(url, version) {
   if (!normalized) return "";
   const cacheKey = encodeURIComponent(String(version || Date.now()).replace(/\s+/g, "-"));
   return `${normalized}${normalized.includes("?") ? "&" : "?"}v=${cacheKey}`;
+}
+
+function defaultContentLabel(type) {
+  if (type === "note") return "PDF";
+  if (type === "resource") return "Resource";
+  if (type === "article") return "Article";
+  return "Program";
+}
+
+function defaultContentCover(type) {
+  if (type === "note") return "assets/room-notes.jpg";
+  if (type === "program") return "assets/room-articles.jpg";
+  if (type === "resource") return "assets/home-bg-1.jpg";
+  if (type === "article") return "assets/room-ask.jpg";
+  return "assets/home-bg-2.jpg";
+}
+
+function looksLikeImagePath(value) {
+  return /\.(png|jpe?g|webp|gif|avif|svg)(\?.*)?$/i.test(String(value || "").trim());
+}
+
+function normalizeImagePath(value) {
+  return String(value || "").trim().replace(/\\/g, "/");
+}
+
+function splitContentLabel(raw, type) {
+  const source = String(raw || "").trim();
+  const parts = source.split("|").map((part) => part.trim()).filter(Boolean);
+  const first = normalizeImagePath(parts[0] || "");
+  const firstIsImage = looksLikeImagePath(first);
+  return {
+    label: firstIsImage ? defaultContentLabel(type) : (first || defaultContentLabel(type)),
+    cover: normalizeImagePath(parts.length > 1 ? parts.slice(1).join("|") : (firstIsImage ? first : "")),
+  };
+}
+
+function packContentLabel(label, cover, type) {
+  const cleanLabel = String(label || "").trim() || defaultContentLabel(type);
+  const cleanCover = String(cover || "").trim().replace(/\\/g, "/");
+  return cleanCover ? `${cleanLabel}|${cleanCover}` : cleanLabel;
+}
+
+function contentCoverForAdmin(item) {
+  const meta = splitContentLabel(item.label, item.type);
+  const directCover = normalizeImagePath(item.image_url || item.cover_url || item.cover || "");
+  const overrideCover = contentCoverOverridesByTitle[String(item.title || "").trim()] || "";
+  const coverCanBeReplaced = !meta.cover || replaceableContentCovers.has(meta.cover);
+  return directCover
+    || (overrideCover && coverCanBeReplaced ? overrideCover : meta.cover)
+    || overrideCover
+    || defaultContentCover(item.type);
 }
 
 function applyTheme(theme) {
@@ -315,6 +389,23 @@ function renderNeteasePreview(data) {
   `;
 }
 
+function contentAdminPreview(item) {
+  const meta = splitContentLabel(item.label, item.type);
+  const cover = contentCoverForAdmin(item);
+  const cleanUrl = String(item.url || "").replace(/^https?:\/\//, "").replace(/\/$/, "");
+  return `
+    <div class="admin-content-preview">
+      <img src="${escapeHtml(imageUrlWithVersion(cover, item.updated_at || item.id))}" alt="" loading="lazy">
+      <div>
+        <span class="admin-pill">${escapeHtml(meta.label || defaultContentLabel(item.type))}</span>
+        <strong>${escapeHtml(item.title || "未命名内容")}</strong>
+        <p>${escapeHtml(item.description || "还没有简介。")}</p>
+        ${cleanUrl ? `<small>${escapeHtml(cleanUrl)}</small>` : ""}
+      </div>
+    </div>
+  `;
+}
+
 async function saveMusicPlaylist(items) {
   currentSettings["music.playlist"] = JSON.stringify(items, null, 2);
   await api("/api/settings", {
@@ -425,7 +516,9 @@ function renderContentItems(items) {
     return;
   }
 
-  contentList.innerHTML = contentItems.map((item) => `
+  contentList.innerHTML = contentItems.map((item) => {
+    const meta = splitContentLabel(item.label, item.type);
+    return `
     <article class="glass-card admin-row content-edit-row" data-content-id="${item.id}">
       <div class="admin-row-head">
         <div>
@@ -435,6 +528,7 @@ function renderContentItems(items) {
         </div>
         <time>${escapeHtml(item.created_at || "")}</time>
       </div>
+      ${contentAdminPreview(item)}
       <label>
         类型
         <select name="type">
@@ -447,7 +541,13 @@ function renderContentItems(items) {
       <label>标题<input type="text" name="title" value="${escapeHtml(item.title || "")}"></label>
       <label>说明<textarea name="description" rows="3">${escapeHtml(item.description || "")}</textarea></label>
       <label>链接<input type="url" name="url" value="${escapeHtml(item.url || "")}"></label>
-      <label>标签<input type="text" name="label" value="${escapeHtml(item.label || "")}"></label>
+      <label>标签<input type="text" name="label" value="${escapeHtml(meta.label || "")}" placeholder="PDF / Program / Resource"></label>
+      <label>名片配图<input type="text" name="cover" value="${escapeHtml(meta.cover || "")}" placeholder="assets/room-notes.jpg 或 https://..."></label>
+      <label class="file-import-row">
+        本地导入图片
+        <input type="file" accept="image/*" data-cover-import>
+        <span>选择后会自动填入上方配图字段。</span>
+      </label>
       <label>
         状态
         <select name="status">
@@ -461,7 +561,8 @@ function renderContentItems(items) {
         <p class="form-status" role="status" aria-live="polite"></p>
       </div>
     </article>
-  `).join("");
+  `;
+  }).join("");
 
   contentList.querySelectorAll(".content-edit-row").forEach((row) => {
     const item = contentItems.find((entry) => String(entry.id) === row.dataset.contentId);
@@ -474,6 +575,8 @@ function renderContentItems(items) {
       row.querySelectorAll("[name]").forEach((field) => {
         payload[field.name] = field.value;
       });
+      payload.label = packContentLabel(payload.label, payload.cover, payload.type);
+      delete payload.cover;
 
       button.disabled = true;
       statusText.textContent = "正在保存...";
@@ -656,6 +759,40 @@ function momentAdminPreview(item) {
       ${momentPreviewImages(item.image_url, item.content)}
     </div>
   `;
+}
+
+function readFileAsDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.addEventListener("load", () => resolve(String(reader.result || "")));
+    reader.addEventListener("error", () => reject(reader.error || new Error("图片读取失败")));
+    reader.readAsDataURL(file);
+  });
+}
+
+async function handleCoverImport(input) {
+  const file = input.files?.[0];
+  if (!file) return;
+  const container = input.closest(".content-edit-row") || input.closest("form");
+  const statusText = container?.querySelector(".form-status");
+  const coverInput = container?.querySelector('input[name="cover"]');
+  if (!coverInput) return;
+  if (!file.type.startsWith("image/")) {
+    if (statusText) statusText.textContent = "请选择图片文件。";
+    return;
+  }
+  if (statusText) statusText.textContent = "正在读取本地图片...";
+  try {
+    const dataUrl = await readFileAsDataUrl(file);
+    coverInput.value = dataUrl;
+    const previewImage = container?.querySelector(".admin-content-preview img");
+    if (previewImage) previewImage.src = dataUrl;
+    if (statusText) statusText.textContent = "图片已导入配图字段，保存后生效。";
+  } catch (error) {
+    if (statusText) statusText.textContent = error.message || "图片读取失败。";
+  } finally {
+    input.value = "";
+  }
 }
 
 function renderMomentItems(items) {
@@ -900,6 +1037,8 @@ settingsForm?.addEventListener("submit", async (event) => {
 contentForm?.addEventListener("submit", async (event) => {
   event.preventDefault();
   const payload = Object.fromEntries(new FormData(contentForm).entries());
+  payload.label = packContentLabel(payload.label, payload.cover, payload.type);
+  delete payload.cover;
 
   try {
     await api("/api/content-items", { method: "POST", body: JSON.stringify(payload) });
@@ -908,6 +1047,12 @@ contentForm?.addEventListener("submit", async (event) => {
     await loadContentItems();
   } catch (error) {
     setStatus(contentForm, error.message);
+  }
+});
+
+document.addEventListener("change", (event) => {
+  if (event.target?.matches?.("[data-cover-import]")) {
+    handleCoverImport(event.target);
   }
 });
 

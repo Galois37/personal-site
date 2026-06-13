@@ -1,11 +1,11 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>控制台 | Galois37の完美算术教室</title>
   <meta name="description" content="Galois37 网站控制台。">
-  <link rel="stylesheet" href="styles.css?v=20260611-stage8-admin-1">
+  <link rel="stylesheet" href="styles.css?v=20260613-page-copy-1">
 </head>
 <body data-page="admin">
   <main class="admin-shell">
@@ -103,6 +103,15 @@
           <label>笔记空间标题<input type="text" name="rooms.notesTitle"></label>
           <label>文章项目空间标题<input type="text" name="rooms.articlesTitle"></label>
           <label>提问箱空间标题<input type="text" name="rooms.askTitle"></label>
+          <label>笔记页描述<textarea name="pages.notesDescription" rows="3"></textarea></label>
+          <label>项目页描述<textarea name="pages.articlesDescription" rows="3"></textarea></label>
+          <label>提问箱页描述<textarea name="pages.askDescription" rows="4"></textarea></label>
+          <label>归档页描述<textarea name="pages.archiveDescription" rows="3"></textarea></label>
+          <label>说说页描述<textarea name="pages.momentsDescription" rows="3"></textarea></label>
+          <label>音乐页描述<textarea name="pages.musicDescription" rows="3"></textarea></label>
+          <label>友链页描述<textarea name="pages.friendsDescription" rows="3"></textarea></label>
+          <label>资源库页描述<textarea name="pages.resourcesDescription" rows="3"></textarea></label>
+          <label>成分重合度预留页描述<textarea name="pages.matchDescription" rows="3"></textarea></label>
           <button class="button primary" type="submit">保存文案</button>
           <p class="form-status" role="status" aria-live="polite"></p>
         </form>
@@ -125,6 +134,12 @@
           <label>说明<textarea name="description" rows="4" placeholder="可以写长期连载中、项目简介等"></textarea></label>
           <label>链接<input type="url" name="url" placeholder="PDF 链接 / 项目链接 / 文章链接"></label>
           <label>标签<input type="text" name="label" placeholder="PDF / Program / Resource / 友链分类"></label>
+          <label>名片配图<input type="text" name="cover" placeholder="assets/room-notes.jpg 或 https://..."></label>
+          <label class="file-import-row">
+            本地导入图片
+            <input type="file" accept="image/*" data-cover-import>
+            <span>选择后会自动填入上方配图字段。</span>
+          </label>
           <label>
             状态
             <select name="status">
@@ -257,6 +272,7 @@
     </section>
   </main>
 
-  <script src="admin.js?v=20260611-stage8-admin-1"></script>
+  <script src="admin.js?v=20260613-page-copy-1"></script>
 </body>
 </html>
+
