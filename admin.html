@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>控制台 | Galois37の完美算术教室</title>
   <meta name="description" content="Galois37 网站控制台。">
-  <link rel="stylesheet" href="styles.css?v=20260613-page-copy-1">
+  <link rel="stylesheet" href="styles.css?v=20260613-remove-resource-1">
 </head>
 <body data-page="admin">
   <main class="admin-shell">
@@ -110,7 +110,6 @@
           <label>说说页描述<textarea name="pages.momentsDescription" rows="3"></textarea></label>
           <label>音乐页描述<textarea name="pages.musicDescription" rows="3"></textarea></label>
           <label>友链页描述<textarea name="pages.friendsDescription" rows="3"></textarea></label>
-          <label>资源库页描述<textarea name="pages.resourcesDescription" rows="3"></textarea></label>
           <label>成分重合度预留页描述<textarea name="pages.matchDescription" rows="3"></textarea></label>
           <button class="button primary" type="submit">保存文案</button>
           <p class="form-status" role="status" aria-live="polite"></p>
@@ -125,7 +124,6 @@
             类型
             <select name="type">
               <option value="note">笔记 note</option>
-              <option value="resource">资源 resource</option>
               <option value="program">项目 program</option>
               <option value="article">文章 article</option>
             </select>
@@ -133,7 +131,7 @@
           <label>标题<input type="text" name="title" required></label>
           <label>说明<textarea name="description" rows="4" placeholder="可以写长期连载中、项目简介等"></textarea></label>
           <label>链接<input type="url" name="url" placeholder="PDF 链接 / 项目链接 / 文章链接"></label>
-          <label>标签<input type="text" name="label" placeholder="PDF / Program / Resource / 友链分类"></label>
+          <label>标签<input type="text" name="label" placeholder="PDF / Program / 友链分类"></label>
           <label>名片配图<input type="text" name="cover" placeholder="assets/room-notes.jpg 或 https://..."></label>
           <label class="file-import-row">
             本地导入图片
@@ -272,7 +270,8 @@
     </section>
   </main>
 
-  <script src="admin.js?v=20260613-page-copy-1"></script>
+  <script src="admin.js?v=20260613-remove-resource-1"></script>
 </body>
 </html>
+
 

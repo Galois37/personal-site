@@ -92,7 +92,6 @@ nku 数院大一在读，也是成分复杂的地球 online 玩家。
   "pages.momentsDescription": "短动态、碎碎念、近况和一些不必写成文章的小记录。",
   "pages.friendsDescription": "存放朋友的网站、喜欢的个人站和想长期保留的网络角落。",
   "pages.musicDescription": "在这里播放和切换站点歌单。",
-  "pages.resourcesDescription": "这里收集一些常用网页、学习资料、工具和资源入口。内容可以在控制台里用 resource 类型维护。",
   "pages.matchDescription": "这个页面先作为功能预留。之后可以做成问卷、打分器，或者随机生成你和 Galois37 的兴趣契合度报告。",
   "music.playlist": JSON.stringify(defaultMusicPlaylist, null, 2),
 };
@@ -113,7 +112,6 @@ const adminViewTitles = {
 const contentCoverOverridesByTitle = {
   "从 p 进数到 Tate Thesis": "assets/content-covers/note-tate.jpg",
   "Analysis": "assets/content-covers/note-analysis.jpg",
-  "实用链接与资源库": "assets/content-covers/project-resources.jpg",
   "数学 MBTI 测试": "assets/content-covers/project-math-mbti.jpg",
 };
 
@@ -148,7 +146,6 @@ function imageUrlWithVersion(url, version) {
 
 function defaultContentLabel(type) {
   if (type === "note") return "PDF";
-  if (type === "resource") return "Resource";
   if (type === "article") return "Article";
   return "Program";
 }
@@ -156,7 +153,6 @@ function defaultContentLabel(type) {
 function defaultContentCover(type) {
   if (type === "note") return "assets/room-notes.jpg";
   if (type === "program") return "assets/room-articles.jpg";
-  if (type === "resource") return "assets/home-bg-1.jpg";
   if (type === "article") return "assets/room-ask.jpg";
   return "assets/home-bg-2.jpg";
 }
@@ -510,7 +506,7 @@ function renderMusicItems(items) {
 
 function renderContentItems(items) {
   if (!contentList) return;
-  const contentItems = items.filter((item) => item.type !== "friend");
+  const contentItems = items.filter((item) => item.type !== "friend" && item.type !== "resource");
   if (!contentItems.length) {
     contentList.innerHTML = `<article class="glass-card admin-row"><strong>暂无内容条目</strong><p>可以先导入一条笔记或项目。</p></article>`;
     return;
@@ -533,7 +529,6 @@ function renderContentItems(items) {
         类型
         <select name="type">
           <option value="note">笔记 note</option>
-          <option value="resource">资源 resource</option>
           <option value="program">项目 program</option>
           <option value="article">文章 article</option>
         </select>
@@ -541,7 +536,7 @@ function renderContentItems(items) {
       <label>标题<input type="text" name="title" value="${escapeHtml(item.title || "")}"></label>
       <label>说明<textarea name="description" rows="3">${escapeHtml(item.description || "")}</textarea></label>
       <label>链接<input type="url" name="url" value="${escapeHtml(item.url || "")}"></label>
-      <label>标签<input type="text" name="label" value="${escapeHtml(meta.label || "")}" placeholder="PDF / Program / Resource"></label>
+      <label>标签<input type="text" name="label" value="${escapeHtml(meta.label || "")}" placeholder="PDF / Program / Article"></label>
       <label>名片配图<input type="text" name="cover" value="${escapeHtml(meta.cover || "")}" placeholder="assets/room-notes.jpg 或 https://..."></label>
       <label class="file-import-row">
         本地导入图片

@@ -15,7 +15,6 @@ let musicPanelViews;
 let messageForm;
 let publicMessages;
 let privateMessages;
-let resourceBoard;
 let archiveBoard;
 let momentsBoard;
 let friendsBoard;
@@ -45,7 +44,6 @@ function refreshDomRefs() {
   messageForm = document.querySelector("[data-message-form], [data-static-form]");
   publicMessages = document.querySelector("[data-public-messages]");
   privateMessages = document.querySelector("[data-private-messages]");
-  resourceBoard = document.querySelector("[data-resource-board]");
   archiveBoard = document.querySelector("[data-archive-board]");
   momentsBoard = document.querySelector("[data-moments-board]");
   friendsBoard = document.querySelector("[data-friends-board]");
@@ -129,7 +127,6 @@ const defaultSettings = {
   "pages.momentsDescription": "短动态、碎碎念、近况和一些不必写成文章的小记录。",
   "pages.friendsDescription": "存放朋友的网站、喜欢的个人站和想长期保留的网络角落。",
   "pages.musicDescription": "在这里播放和切换站点歌单。",
-  "pages.resourcesDescription": "这里收集一些常用网页、学习资料、工具和资源入口。内容可以在控制台里用 resource 类型维护。",
   "pages.matchDescription": "这个页面先作为功能预留。之后可以做成问卷、打分器，或者随机生成你和 Galois37 的兴趣契合度报告。",
   "music.playlist": JSON.stringify(defaultMusicPlaylist, null, 2),
 };
@@ -137,7 +134,6 @@ const defaultSettings = {
 const contentCoverOverridesByTitle = {
   "从 p 进数到 Tate Thesis": "assets/content-covers/note-tate.jpg",
   "Analysis": "assets/content-covers/note-analysis.jpg",
-  "实用链接与资源库": "assets/content-covers/project-resources.jpg",
   "数学 MBTI 测试": "assets/content-covers/project-math-mbti.jpg",
 };
 
@@ -170,17 +166,6 @@ const defaultContentItems = [
     status: "visible",
     created_at: "2026-06-02 15:49:44",
     updated_at: "2026-06-05-pdf-deploy-1",
-  },
-  {
-    id: "static-resource-library",
-    type: "resource",
-    title: "实用链接与资源库",
-    description: "常用网页、学习资料、工具入口和资源库。",
-    url: "resources.html",
-    label: "Resource|assets/content-covers/project-resources.jpg",
-    status: "visible",
-    created_at: "2026-06-03 10:00:00",
-    updated_at: "2026-06-03",
   },
   {
     id: "static-math-mbti",
@@ -237,7 +222,6 @@ function assetUrlWithVersion(url, version) {
 function defaultContentCover(type) {
   if (type === "note") return "assets/room-notes.jpg";
   if (type === "program") return "assets/room-articles.jpg";
-  if (type === "resource") return "assets/home-bg-1.jpg";
   if (type === "article") return "assets/room-ask.jpg";
   return "assets/home-bg-2.jpg";
 }
@@ -266,7 +250,7 @@ function parseContentMeta(item) {
     || overrideCover
     || defaultContentCover(item.type);
   return {
-    label: label || (item.type === "note" ? "PDF" : item.type === "resource" ? "Resource" : item.type === "article" ? "Article" : "Program"),
+    label: label || (item.type === "note" ? "PDF" : item.type === "article" ? "Article" : "Program"),
     cover,
   };
 }
@@ -779,8 +763,7 @@ function formatLargeNumber(value) {
 
 function updateHomeStats(items) {
   const notes = items.filter((item) => item.type === "note").length;
-  const resourceLibraryEntry = 1;
-  const works = items.filter((item) => ["article", "program", "resource"].includes(item.type)).length + resourceLibraryEntry;
+  const works = items.filter((item) => ["article", "program"].includes(item.type)).length;
   const map = { notes, works };
   Object.entries(map).forEach(([key, value]) => {
     const target = document.querySelector(`[data-stat-count="${key}"]`);
@@ -804,50 +787,11 @@ async function loadHomeStats() {
   }
 }
 
-function renderResources(items) {
-  if (!resourceBoard) return;
-  if (!items.length) {
-    resourceBoard.innerHTML = `
-      <article class="glass-card">
-        <h2>资源库还在建设中</h2>
-        <p>可以在控制台中新增 resource 类型条目，保存后会显示在这里。</p>
-      </article>
-    `;
-    return;
-  }
-
-  const groups = items.reduce((map, item) => {
-    const label = parseContentMeta(item).label || "未分类";
-    if (!map.has(label)) map.set(label, []);
-    map.get(label).push(item);
-    return map;
-  }, new Map());
-
-  resourceBoard.innerHTML = [...groups.entries()].map(([label, entries]) => `
-    <section class="resource-group">
-      <div class="section-title">
-        <p class="eyebrow">Resource</p>
-        <h2>${escapeHtml(label)}</h2>
-      </div>
-      <div class="resource-grid">
-        ${entries.map((item) => `
-          <a class="glass-card resource-card visual-resource-card" href="${escapeHtml(item.url || "#")}" target="_blank" rel="noreferrer" style="--resource-cover: url('${escapeHtml(assetUrlWithVersion(parseContentMeta(item).cover, item.updated_at || item.id))}')">
-            <span class="resource-card-shade"></span>
-            <strong>${escapeHtml(item.title)}</strong>
-            <p>${escapeHtml(item.description || "")}</p>
-          </a>
-        `).join("")}
-      </div>
-    </section>
-  `).join("");
-}
-
 function contentTypeName(type) {
   return ({
     note: "笔记",
     article: "文章",
     program: "项目",
-    resource: "资源",
     moment: "说说",
     friend: "友链",
   })[type] || type;
@@ -855,7 +799,7 @@ function contentTypeName(type) {
 
 function renderArchive(items) {
   if (!archiveBoard) return;
-  const visibleItems = items.filter((item) => item.type !== "friend");
+  const visibleItems = items.filter((item) => item.type !== "friend" && item.type !== "resource");
   if (!visibleItems.length) {
     archiveBoard.innerHTML = `<article class="glass-card"><h2>归档还在整理中</h2><p>公开内容会按时间出现在这里。</p></article>`;
     return;
@@ -973,7 +917,7 @@ async function loadContentItems() {
     : pageType === "articles"
       ? document.querySelector(".article-list")
       : null;
-  if (!list && !resourceBoard && !archiveBoard && !friendsBoard && pageType !== "home") return;
+  if (!list && !archiveBoard && !friendsBoard && pageType !== "home") return;
 
   let allItems = defaultContentItems;
   try {
@@ -986,10 +930,6 @@ async function loadContentItems() {
   }
 
   updateHomeStats(allItems);
-  if (resourceBoard) {
-    renderResources(allItems.filter((item) => item.type === "resource"));
-    return;
-  }
   if (archiveBoard) {
     renderArchive(allItems);
     return;
@@ -1002,8 +942,7 @@ async function loadContentItems() {
     pageType === "notes" ? item.type === "note" : item.type === "article" || item.type === "program"
   ));
   if (items.length && list) {
-    const staticResourceCard = pageType === "articles" ? list.querySelector(".resource-entry")?.outerHTML || "" : "";
-    list.innerHTML = `${staticResourceCard}${items.map((item) => renderContentItem(item, pageType)).join("")}`;
+    list.innerHTML = items.map((item) => renderContentItem(item, pageType)).join("");
   }
 }
 

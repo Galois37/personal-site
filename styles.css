@@ -409,7 +409,6 @@ body:not([data-page="home"]) .section {
 .archive-item,
 .moment-card,
 .friend-card,
-.resource-card,
 .admin-login,
 .admin-section,
 .admin-row {
@@ -655,7 +654,6 @@ body:not([data-page="home"]) .section {
 .archive-item,
 .moment-card,
 .friend-card,
-.resource-card,
 .admin-login,
 .admin-section,
 .admin-row {
@@ -1523,62 +1521,6 @@ body:not([data-page="home"]) .section {
 .admin-moment-image {
   aspect-ratio: 16 / 10;
   max-height: 220px;
-}
-
-.resource-board,
-.resource-group {
-  display: grid;
-  gap: 22px;
-}
-
-.resource-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
-}
-
-.resource-card {
-  position: relative;
-  overflow: hidden;
-  display: grid;
-  gap: 8px;
-  padding: 20px;
-  transition: transform 180ms ease, border-color 180ms ease;
-}
-
-.visual-resource-card {
-  min-height: 190px;
-  align-content: end;
-  background:
-    linear-gradient(180deg, rgba(8, 12, 28, 0.12), rgba(8, 12, 28, 0.72)),
-    var(--resource-cover),
-    rgba(255, 255, 255, 0.05);
-  background-size: cover;
-  background-position: center;
-}
-
-.resource-card-shade {
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(circle at 16% 16%, rgba(124, 211, 255, 0.18), transparent 34%);
-  pointer-events: none;
-}
-
-.visual-resource-card strong,
-.visual-resource-card p {
-  position: relative;
-  z-index: 1;
-}
-
-.resource-card:hover,
-.resource-card:focus-visible {
-  transform: translateY(-2px);
-  border-color: rgba(50, 199, 217, 0.38);
-  outline: none;
-}
-
-.resource-card strong {
-  font-size: 1.08rem;
 }
 
 .clean-list {
@@ -4047,10 +3989,6 @@ html[data-theme="light"] .music-lyrics-empty {
 
   .article-card {
     display: grid;
-  }
-
-  .resource-grid {
-    grid-template-columns: 1fr;
   }
 
   .admin-row-head,
