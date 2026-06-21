@@ -1,11 +1,11 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>友链 | Galois37の完美算术教室</title>
   <meta name="description" content="Galois37 的友链页面。">
-  <link rel="stylesheet" href="styles.css?v=20260613-moments-masonry-1">
+  <link rel="stylesheet" href="styles.css?v=20260621-friend-apply-2">
 </head>
 <body data-page="friends">
   <header class="site-header" id="top">
@@ -44,16 +44,28 @@
         <div>
           <p class="eyebrow">Connection</p>
           <h2>建立神经连接</h2>
-          <p>欢迎交换友链。你可以把下方信息发给对方，也可以在控制台里维护朋友们的网站卡片。</p>
+          <p>欢迎各位大佬交换友链！可在模板处修改成自己的网站信息，一键发送即可~</p>
         </div>
-        <div class="friend-template-box">
-          <pre><code data-friend-template>名称：Galois37の完美算术教室
-简介：数学、幻想、meta 与地球 online 的临时据点。
-链接：https://galois37.top
-头像：https://galois37.top/assets/avatar.jpg</code></pre>
-          <button class="button secondary friend-copy-button" type="button" data-copy-friend-template>复制我的友链信息</button>
-          <p class="friend-copy-status" data-copy-friend-status role="status" aria-live="polite"></p>
-        </div>
+        <form class="friend-template-box friend-apply-form" data-friend-apply-form>
+          <label>
+            名称
+            <input type="text" name="title" value="Galois37の完美算术教室" required maxlength="80">
+          </label>
+          <label>
+            简介
+            <textarea name="description" rows="2" maxlength="180" required>数学、幻想、meta 与地球 online 的临时据点。</textarea>
+          </label>
+          <label>
+            链接
+            <input type="url" name="url" value="https://galois37.top" required>
+          </label>
+          <label>
+            头像
+            <input type="url" name="label" value="https://galois37.top/assets/avatar.jpg">
+          </label>
+          <button class="button secondary friend-copy-button" type="submit">一键发送</button>
+          <p class="friend-copy-status" data-friend-apply-status role="status" aria-live="polite"></p>
+        </form>
       </article>
       <div class="friend-grid" data-friends-board>
         <article class="glass-card">
@@ -69,9 +81,11 @@
     <a href="#top">回到顶部</a>
   </footer>
 
-  <script src="script.js?v=20260613-moments-masonry-1"></script>
+  <script src="script.js?v=20260621-friend-apply-2"></script>
 </body>
 </html>
+
+
 
 
 

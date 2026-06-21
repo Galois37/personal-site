@@ -861,20 +861,6 @@ body:not([data-page="home"]) .section {
   min-width: 0;
 }
 
-.friend-link-text {
-  position: absolute;
-  left: 124px;
-  right: 72px;
-  bottom: 18px;
-  z-index: 1;
-  overflow: hidden;
-  color: rgba(210, 222, 255, 0.48);
-  font-size: 0.82rem;
-  font-weight: 800;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 .friend-body strong {
   color: var(--ink);
   font-size: clamp(1.25rem, 2.4vw, 1.65rem);
@@ -954,6 +940,18 @@ body:not([data-page="home"]) .section {
 .friend-template-box {
   display: grid;
   gap: 12px;
+}
+
+.friend-apply-form label {
+  display: grid;
+  gap: 7px;
+  color: var(--muted);
+  font-weight: 900;
+}
+
+.friend-apply-form input,
+.friend-apply-form textarea {
+  background: rgba(8, 12, 24, 0.38);
 }
 
 .friend-connection pre {
@@ -2302,6 +2300,11 @@ html[data-theme="light"] .friend-connection pre {
   color: #4c3829;
 }
 
+html[data-theme="light"] .friend-apply-form input,
+html[data-theme="light"] .friend-apply-form textarea {
+  background: rgba(255, 252, 242, 0.42);
+}
+
 .home-main {
   min-height: 100svh;
 }
@@ -3588,11 +3591,6 @@ html[data-theme="light"] .music-lyrics-empty {
     top: 18px;
   }
 
-  .friend-link-text {
-    left: 104px;
-    right: 58px;
-    bottom: 16px;
-  }
 }
 
 @media (max-width: 860px) {

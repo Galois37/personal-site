@@ -888,7 +888,7 @@ async function loadMomentsPage() {
 
 function renderFriends(items) {
   if (!friendsBoard) return;
-  const friends = items.filter((item) => item.type === "friend");
+  const friends = items.filter((item) => item.type === "friend" && (item.status || "visible") === "visible");
   if (!friends.length) {
     friendsBoard.innerHTML = `<article class="glass-card friend-empty"><h2>友链位招租中</h2><p>可以在控制台的“友链”分区添加朋友的网站。</p></article>`;
     return;
@@ -904,7 +904,6 @@ function renderFriends(items) {
         <strong>${escapeHtml(item.title || "")}</strong>
         <span>${escapeHtml(item.description || "这个朋友还没有写简介。")}</span>
       </span>
-      <span class="friend-link-text">${escapeHtml((item.url || "").replace(/^https?:\/\//, "").replace(/\/$/, ""))}</span>
       <span class="friend-arrow" aria-hidden="true">↗</span>
     </a>
   `).join("");
@@ -1202,15 +1201,27 @@ function bindCurrentPageEvents() {
   pageAbortController?.abort();
   pageAbortController = new AbortController();
 
-  const copyFriendButton = document.querySelector("[data-copy-friend-template]");
-  addPageListener(copyFriendButton, "click", async () => {
-    const template = document.querySelector("[data-friend-template]");
-    const status = document.querySelector("[data-copy-friend-status]");
+  const friendApplyForm = document.querySelector("[data-friend-apply-form]");
+  addPageListener(friendApplyForm, "submit", async (event) => {
+    event.preventDefault();
+    const status = document.querySelector("[data-friend-apply-status]");
+    const button = friendApplyForm.querySelector("button[type='submit']");
+    const payload = Object.fromEntries(new FormData(friendApplyForm).entries());
+    if (status) status.textContent = "正在发送友链申请...";
+    if (button) button.disabled = true;
     try {
-      await copyTextToClipboard(template?.textContent?.trim() || "");
-      if (status) status.textContent = "已复制，可以直接发给想交换友链的站长。";
-    } catch {
-      if (status) status.textContent = "复制失败，可以手动选中上方文字复制。";
+      const response = await fetch("/api/friend-applications", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result.error || "发送失败，请稍后再试。");
+      if (status) status.textContent = "已发送，站长会在控制台里看到这条申请。";
+    } catch (error) {
+      if (status) status.textContent = error.message;
+    } finally {
+      if (button) button.disabled = false;
     }
   });
 
