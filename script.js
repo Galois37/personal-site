@@ -28,6 +28,15 @@ let guestPanel;
 let userPanel;
 let currentUserText;
 let logoutButton;
+let articleTitle;
+let articleDescription;
+let articleCategory;
+let articleDate;
+let articleCoverWrap;
+let articleCover;
+let articleContent;
+let articleIndexBoard;
+let articleIndexCount;
 let pageAbortController;
 let cachedSettings = {};
 
@@ -57,6 +66,15 @@ function refreshDomRefs() {
   userPanel = document.querySelector("[data-user-panel]");
   currentUserText = document.querySelector("[data-current-user]");
   logoutButton = document.querySelector("[data-logout]");
+  articleTitle = document.querySelector("[data-article-title]");
+  articleDescription = document.querySelector("[data-article-description]");
+  articleCategory = document.querySelector("[data-article-category]");
+  articleDate = document.querySelector("[data-article-date]");
+  articleCoverWrap = document.querySelector("[data-article-cover-wrap]");
+  articleCover = document.querySelector("[data-article-cover]");
+  articleContent = document.querySelector("[data-article-content]");
+  articleIndexBoard = document.querySelector("[data-article-index-board]");
+  articleIndexCount = document.querySelector("[data-article-index-count]");
 }
 
 function addPageListener(target, eventName, handler) {
@@ -135,6 +153,7 @@ const contentCoverOverridesByTitle = {
   "从 p 进数到 Tate Thesis": "assets/content-covers/note-tate.jpg",
   "Analysis": "assets/content-covers/note-analysis.jpg",
   "数学 MBTI 测试": "assets/content-covers/project-math-mbti.jpg",
+  "文章与杂谈": "assets/content-covers/article-hub.png",
 };
 
 const replaceableContentCovers = new Set([
@@ -203,6 +222,104 @@ function escapeHtml(value) {
     '"': "&quot;",
     "'": "&#39;",
   })[char]);
+}
+
+function renderInlineMarkdown(value) {
+  return escapeHtml(value)
+    .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" loading="lazy">')
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noreferrer">$1</a>')
+    .replace(/`([^`]+)`/g, "<code>$1</code>")
+    .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+    .replace(/\*([^*]+)\*/g, "<em>$1</em>");
+}
+
+function markdownToHtml(markdown) {
+  const source = String(markdown || "").replace(/\r\n/g, "\n");
+  if (!source.trim()) return "<p>这篇文章还没有正文。</p>";
+
+  const lines = source.split("\n");
+  const html = [];
+  let inCode = false;
+  let codeLines = [];
+  let listType = "";
+
+  const closeList = () => {
+    if (!listType) return;
+    html.push(`</${listType}>`);
+    listType = "";
+  };
+
+  const closeCode = () => {
+    html.push(`<pre><code>${escapeHtml(codeLines.join("\n"))}</code></pre>`);
+    codeLines = [];
+    inCode = false;
+  };
+
+  lines.forEach((line) => {
+    if (/^\s*```/.test(line)) {
+      if (inCode) closeCode();
+      else {
+        closeList();
+        inCode = true;
+        codeLines = [];
+      }
+      return;
+    }
+
+    if (inCode) {
+      codeLines.push(line);
+      return;
+    }
+
+    if (!line.trim()) {
+      closeList();
+      return;
+    }
+
+    const heading = /^(#{1,4})\s+(.+)$/.exec(line);
+    if (heading) {
+      closeList();
+      const level = heading[1].length;
+      html.push(`<h${level}>${renderInlineMarkdown(heading[2])}</h${level}>`);
+      return;
+    }
+
+    const quote = /^>\s?(.+)$/.exec(line);
+    if (quote) {
+      closeList();
+      html.push(`<blockquote>${renderInlineMarkdown(quote[1])}</blockquote>`);
+      return;
+    }
+
+    const unordered = /^[-*]\s+(.+)$/.exec(line);
+    if (unordered) {
+      if (listType !== "ul") {
+        closeList();
+        listType = "ul";
+        html.push("<ul>");
+      }
+      html.push(`<li>${renderInlineMarkdown(unordered[1])}</li>`);
+      return;
+    }
+
+    const ordered = /^\d+\.\s+(.+)$/.exec(line);
+    if (ordered) {
+      if (listType !== "ol") {
+        closeList();
+        listType = "ol";
+        html.push("<ol>");
+      }
+      html.push(`<li>${renderInlineMarkdown(ordered[1])}</li>`);
+      return;
+    }
+
+    closeList();
+    html.push(`<p>${renderInlineMarkdown(line)}</p>`);
+  });
+
+  if (inCode) closeCode();
+  closeList();
+  return html.join("");
 }
 
 function imageUrlWithVersion(url, version) {
@@ -705,8 +822,11 @@ function renderContentItem(item, pageType) {
   const label = escapeHtml(meta.label);
   const title = escapeHtml(item.title || "");
   const description = escapeHtml(item.description || "");
-  const url = escapeHtml(assetUrlWithVersion(item.url || "#", item.updated_at || item.id));
-  const linkText = item.type === "note" ? "打开 PDF" : "打开链接";
+  const rawUrl = String(item.url || "#").trim().replace(/\\/g, "/");
+  const isInternalArticle = item.type === "article" && /^article\.html\?id=/i.test(rawUrl);
+  const url = escapeHtml(isInternalArticle ? rawUrl : assetUrlWithVersion(rawUrl, item.updated_at || item.id));
+  const linkText = item.type === "note" ? "打开 PDF" : item.type === "article" ? "阅读全文" : "打开链接";
+  const linkTarget = isInternalArticle ? "" : ' target="_blank" rel="noreferrer"';
   const createdAt = escapeHtml(item.created_at || "");
   const dateText = escapeHtml((item.created_at || "").slice(0, 10) || "长期维护中");
   const statusText = item.type === "note" ? "长期连载中" : "长期展示中";
@@ -734,7 +854,7 @@ function renderContentItem(item, pageType) {
   }
   return `
     <article class="article-card content-card visual-content-card">
-      <a class="content-cover" href="${url}" target="_blank" rel="noreferrer" aria-label="${title}">
+      <a class="content-cover" href="${url}"${linkTarget} aria-label="${title}">
         <img src="${cover}" alt="" loading="lazy">
       </a>
       <div class="content-body">
@@ -745,8 +865,28 @@ function renderContentItem(item, pageType) {
         <h2>${title}</h2>
         <p>${description}</p>
         <div class="content-actions">
-          <a class="note-link" href="${url}" target="_blank" rel="noreferrer">${linkText}</a>
+          <a class="note-link" href="${url}"${linkTarget}>${linkText}</a>
           <span>${dateText}</span>
+        </div>
+      </div>
+    </article>
+  `;
+}
+
+function renderArticleHubCard() {
+  const cover = assetUrlWithVersion("assets/content-covers/article-hub.png", "20260630-article-hub-1");
+  return `
+    <article class="article-card content-card visual-content-card article-hub-card">
+      <a class="content-cover" href="articles-list.html" aria-label="文章与杂谈">
+        <img src="${escapeHtml(cover)}" alt="" loading="lazy">
+      </a>
+      <div class="content-body">
+        <div class="content-meta-line">
+          <span class="tag">Article</span>
+        </div>
+        <h2>文章与杂谈</h2>
+        <div class="content-actions">
+          <a class="note-link" href="articles-list.html">进入目录</a>
         </div>
       </div>
     </article>
@@ -763,7 +903,7 @@ function formatLargeNumber(value) {
 
 function updateHomeStats(items) {
   const notes = items.filter((item) => item.type === "note").length;
-  const works = items.filter((item) => ["article", "program"].includes(item.type)).length;
+  const works = items.filter((item) => item.type === "program").length + 1;
   const map = { notes, works };
   Object.entries(map).forEach(([key, value]) => {
     const target = document.querySelector(`[data-stat-count="${key}"]`);
@@ -938,10 +1078,129 @@ async function loadContentItems() {
     return;
   }
   const items = allItems.filter((item) => (
-    pageType === "notes" ? item.type === "note" : item.type === "article" || item.type === "program"
+    pageType === "notes" ? item.type === "note" : item.type === "program"
   ));
-  if (items.length && list) {
-    list.innerHTML = items.map((item) => renderContentItem(item, pageType)).join("");
+  if (list) {
+    const renderedItems = items.map((item) => renderContentItem(item, pageType)).join("");
+    list.innerHTML = pageType === "articles" ? `${renderArticleHubCard()}${renderedItems}` : renderedItems;
+  }
+}
+
+function articleYearFrom(value) {
+  const year = String(value || "").slice(0, 4);
+  return /^\d{4}$/.test(year) ? year : "未归档";
+}
+
+function formatArticleIndexDate(value) {
+  const raw = String(value || "");
+  return raw.slice(0, 10) || "长期维护中";
+}
+
+function renderArticleIndex(items) {
+  if (!articleIndexBoard) return;
+  const visiblePosts = items.filter((item) => (item.status || "visible") === "visible");
+  if (articleIndexCount) articleIndexCount.textContent = `全部文章 - ${visiblePosts.length}`;
+  if (!visiblePosts.length) {
+    articleIndexBoard.innerHTML = `
+      <article class="article-index-empty glass-card">
+        <h2>文章还在整理中</h2>
+        <p>之后在控制台发布的 Markdown 文章会按年份出现在这里。</p>
+      </article>
+    `;
+    return;
+  }
+
+  const groups = visiblePosts.reduce((acc, item) => {
+    const year = articleYearFrom(item.created_at || item.updated_at);
+    if (!acc[year]) acc[year] = [];
+    acc[year].push(item);
+    return acc;
+  }, {});
+
+  articleIndexBoard.innerHTML = Object.entries(groups).map(([year, posts]) => `
+    <section class="article-year-group">
+      <div class="article-year-marker">
+        <span class="timeline-dot"></span>
+        <h3>${escapeHtml(year)}</h3>
+      </div>
+      <div class="article-year-list">
+        ${posts.map((post) => {
+          const cover = normalizeImagePath(post.cover || "") || "assets/content-covers/article-hub.png";
+          const date = formatArticleIndexDate(post.created_at || post.updated_at);
+          return `
+            <a class="article-index-row" href="article.html?id=${encodeURIComponent(post.id)}">
+              <span class="timeline-dot"></span>
+              <span class="article-index-thumb">
+                <img src="${escapeHtml(assetUrlWithVersion(cover, post.updated_at || post.id))}" alt="" loading="lazy">
+              </span>
+              <span class="article-index-body">
+                <time datetime="${escapeHtml(post.created_at || "")}">${escapeHtml(date)}</time>
+                <strong>${escapeHtml(post.title || "未命名文章")}</strong>
+              </span>
+            </a>
+          `;
+        }).join("")}
+      </div>
+    </section>
+  `).join("");
+}
+
+async function loadArticleIndexPage() {
+  if (document.body.dataset.page !== "article-list") return;
+  try {
+    const { response, result } = await fetchJsonWithTimeout("/api/posts", {}, 3600);
+    if (!response.ok) throw new Error(result.error || "文章目录暂时不可用。");
+    renderArticleIndex(result.items || []);
+  } catch (error) {
+    renderArticleIndex([]);
+  }
+}
+
+function setArticleError(message) {
+  if (articleTitle) articleTitle.textContent = "文章读取失败";
+  if (articleDescription) articleDescription.textContent = "可能是文章还没有公开，或者网络请求暂时失败。";
+  if (articleContent) articleContent.innerHTML = `<p>${escapeHtml(message)}</p>`;
+}
+
+async function loadArticlePage() {
+  if (document.body.dataset.page !== "article") return;
+  const id = new URLSearchParams(window.location.search).get("id");
+  if (!id) {
+    setArticleError("地址里没有文章 ID。");
+    return;
+  }
+
+  try {
+    const adminToken = localStorage.getItem("galois37_admin_token") || localStorage.getItem(userTokenKey);
+    const options = adminToken ? { headers: { Authorization: `Bearer ${adminToken}` } } : {};
+    const { response, result } = await fetchJsonWithTimeout(`/api/posts/${encodeURIComponent(id)}`, options, 3600);
+    if (!response.ok) throw new Error(result.error || "文章读取失败。");
+    const item = result.item || {};
+    const title = item.title || "未命名文章";
+    const description = item.description || "Galois37 的 Markdown 文章。";
+    const dateText = (item.updated_at || item.created_at || "").slice(0, 10);
+
+    document.title = `${title} | Galois37の完美算术教室`;
+    if (articleTitle) articleTitle.textContent = title;
+    if (articleDescription) articleDescription.textContent = description;
+    if (articleCategory) articleCategory.textContent = item.category || "Article";
+    if (articleDate) {
+      articleDate.textContent = dateText || "长期维护中";
+      articleDate.dateTime = item.updated_at || item.created_at || "";
+    }
+
+    if (articleCoverWrap && articleCover) {
+      const cover = normalizeImagePath(item.cover || "");
+      articleCoverWrap.hidden = !cover;
+      if (cover) {
+        articleCover.src = assetUrlWithVersion(cover, item.updated_at || item.id);
+        articleCover.alt = title;
+      }
+    }
+
+    if (articleContent) articleContent.innerHTML = markdownToHtml(item.content || "");
+  } catch (error) {
+    setArticleError(error.message);
   }
 }
 
@@ -1338,6 +1597,8 @@ async function initCurrentPage({ countView = false } = {}) {
   bindCurrentPageEvents();
   setUser(currentUser);
   await loadContentItems();
+  await loadArticleIndexPage();
+  await loadArticlePage();
   await loadMomentsPage();
   await loadHomeStats();
   await loadCurrentUser();

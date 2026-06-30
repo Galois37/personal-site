@@ -3,11 +3,11 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>归档 | Galois37の完美算术教室</title>
-  <meta name="description" content="Galois37 网站公开内容归档。">
+  <title>文章 | Galois37の完美算术教室</title>
+  <meta name="description" content="Galois37 的 Markdown 文章。">
   <link rel="stylesheet" href="styles.css?v=20260630-article-hub-1">
 </head>
-<body data-page="archive">
+<body data-page="article">
   <header class="site-header" id="top">
     <a class="brand" href="index.html" aria-label="回到首页">
       <span class="brand-mark"><img src="assets/avatar.jpg" alt=""></span>
@@ -32,20 +32,25 @@
     </button>
   </header>
 
-  <main class="page-main">
-    <section class="page-hero">
-      <p class="eyebrow">Archive</p>
-      <h1>归档</h1>
-      <p data-setting-text="pages.archiveDescription">按时间收纳公开的笔记、项目、文章、资源和说说。</p>
+  <main class="page-main article-page-main">
+    <section class="page-hero article-detail-hero">
+      <p class="eyebrow" data-article-category>Article</p>
+      <h1 data-article-title>文章读取中</h1>
+      <p data-article-description>正在从站点数据库里拉取 Markdown 内容。</p>
+      <div class="article-detail-meta">
+        <time data-article-date></time>
+      </div>
     </section>
 
-    <section class="section">
-      <div class="archive-list" data-archive-board>
-        <article class="glass-card">
-          <h2>加载中...</h2>
-          <p>正在读取公开内容。</p>
-        </article>
-      </div>
+    <section class="section article-detail-section">
+      <article class="glass-card article-detail-card">
+        <div class="article-detail-cover" data-article-cover-wrap hidden>
+          <img data-article-cover src="" alt="" loading="lazy">
+        </div>
+        <div class="article-markdown" data-article-content>
+          <p>如果这里停留太久，可以刷新页面再试一次。</p>
+        </div>
+      </article>
     </section>
   </main>
 
@@ -57,9 +62,4 @@
   <script src="script.js?v=20260630-article-hub-1"></script>
 </body>
 </html>
-
-
-
-
-
 

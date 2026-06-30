@@ -1,6 +1,9 @@
 const loginForm = document.querySelector("[data-login-form]");
 const settingsForm = document.querySelector("[data-settings-form]");
 const contentForm = document.querySelector("[data-content-form]");
+const markdownForm = document.querySelector("[data-markdown-form]");
+const markdownList = document.querySelector("[data-markdown-list]");
+const markdownPreview = document.querySelector("[data-markdown-preview]");
 const friendForm = document.querySelector("[data-friend-form]");
 const momentForm = document.querySelector("[data-moment-form]");
 const musicForm = document.querySelector("[data-music-form]");
@@ -97,11 +100,13 @@ nku 数院大一在读，也是成分复杂的地球 online 玩家。
 };
 
 let currentSettings = { ...defaultSettings };
+let editingMarkdownId = null;
 
 const adminViewTitles = {
   overview: "全息仪表盘",
   settings: "系统文案核心",
   content: "笔记与项目",
+  markdown: "Markdown 文章",
   friends: "神经友链",
   moments: "说说发布台",
   music: "云端乐律",
@@ -135,6 +140,105 @@ function escapeHtml(value) {
     '"': "&quot;",
     "'": "&#39;",
   })[char]);
+}
+
+function renderInlineMarkdown(value) {
+  return escapeHtml(value)
+    .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" loading="lazy">')
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noreferrer">$1</a>')
+    .replace(/`([^`]+)`/g, "<code>$1</code>")
+    .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+    .replace(/\*([^*]+)\*/g, "<em>$1</em>");
+}
+
+function markdownToHtml(markdown) {
+  const source = String(markdown || "").replace(/\r\n/g, "\n");
+  if (!source.trim()) return `<p class="markdown-empty">预览会显示在这里。</p>`;
+
+  const lines = source.split("\n");
+  const html = [];
+  let inCode = false;
+  let codeLines = [];
+  let listType = "";
+
+  const closeList = () => {
+    if (!listType) return;
+    html.push(`</${listType}>`);
+    listType = "";
+  };
+
+  const closeCode = () => {
+    html.push(`<pre><code>${escapeHtml(codeLines.join("\n"))}</code></pre>`);
+    codeLines = [];
+    inCode = false;
+  };
+
+  lines.forEach((line) => {
+    if (/^\s*```/.test(line)) {
+      if (inCode) {
+        closeCode();
+      } else {
+        closeList();
+        inCode = true;
+        codeLines = [];
+      }
+      return;
+    }
+
+    if (inCode) {
+      codeLines.push(line);
+      return;
+    }
+
+    if (!line.trim()) {
+      closeList();
+      return;
+    }
+
+    const heading = /^(#{1,4})\s+(.+)$/.exec(line);
+    if (heading) {
+      closeList();
+      const level = heading[1].length;
+      html.push(`<h${level}>${renderInlineMarkdown(heading[2])}</h${level}>`);
+      return;
+    }
+
+    const quote = /^>\s?(.+)$/.exec(line);
+    if (quote) {
+      closeList();
+      html.push(`<blockquote>${renderInlineMarkdown(quote[1])}</blockquote>`);
+      return;
+    }
+
+    const unordered = /^[-*]\s+(.+)$/.exec(line);
+    if (unordered) {
+      if (listType !== "ul") {
+        closeList();
+        listType = "ul";
+        html.push("<ul>");
+      }
+      html.push(`<li>${renderInlineMarkdown(unordered[1])}</li>`);
+      return;
+    }
+
+    const ordered = /^\d+\.\s+(.+)$/.exec(line);
+    if (ordered) {
+      if (listType !== "ol") {
+        closeList();
+        listType = "ol";
+        html.push("<ol>");
+      }
+      html.push(`<li>${renderInlineMarkdown(ordered[1])}</li>`);
+      return;
+    }
+
+    closeList();
+    html.push(`<p>${renderInlineMarkdown(line)}</p>`);
+  });
+
+  if (inCode) closeCode();
+  closeList();
+  return html.join("");
 }
 
 function imageUrlWithVersion(url, version) {
@@ -723,6 +827,114 @@ async function loadContentItems() {
   renderFriendItems(items);
 }
 
+function markdownCoverFromItem(item) {
+  const parts = String(item.label || "").split("|").map((part) => part.trim()).filter(Boolean);
+  return item.cover || (parts.length > 1 ? parts.slice(1).join("|") : "");
+}
+
+function updateMarkdownPreview() {
+  if (!markdownForm || !markdownPreview) return;
+  const content = markdownForm.elements.content?.value || "";
+  markdownPreview.innerHTML = markdownToHtml(content);
+}
+
+function resetMarkdownForm() {
+  if (!markdownForm) return;
+  editingMarkdownId = null;
+  markdownForm.reset();
+  markdownForm.elements.category.value = "Article";
+  markdownForm.elements.status.value = "draft";
+  updateMarkdownPreview();
+  setStatus(markdownForm, "");
+}
+
+function fillMarkdownForm(item) {
+  if (!markdownForm || !item) return;
+  editingMarkdownId = item.id;
+  markdownForm.elements.title.value = item.title || "";
+  markdownForm.elements.category.value = item.category || "Article";
+  markdownForm.elements.description.value = item.description || "";
+  markdownForm.elements.cover.value = markdownCoverFromItem(item);
+  markdownForm.elements.content.value = item.content || "";
+  markdownForm.elements.status.value = item.status || "draft";
+  updateMarkdownPreview();
+  setAdminView("markdown");
+  markdownForm.scrollIntoView({ behavior: "smooth", block: "start" });
+  setStatus(markdownForm, `正在编辑 #${item.id}`);
+}
+
+function renderMarkdownPosts(items) {
+  if (!markdownList) return;
+  if (!items.length) {
+    markdownList.innerHTML = `<article class="glass-card admin-row"><strong>暂无 Markdown 文章</strong><p>可以在上方写第一篇 Article。</p></article>`;
+    return;
+  }
+
+  markdownList.innerHTML = items.map((item) => {
+    const cover = markdownCoverFromItem(item);
+    const coverHtml = cover
+      ? `<img class="admin-row-cover" src="${escapeHtml(imageUrlWithVersion(cover, item.updated_at || item.id))}" alt="" loading="lazy">`
+      : `<span class="admin-row-cover admin-row-cover-empty">MD</span>`;
+    return `
+      <article class="glass-card admin-row markdown-edit-row" data-post-id="${item.id}">
+        <div class="admin-row-head">
+          <div class="admin-row-titleline">
+            ${coverHtml}
+            <div>
+              <strong>${escapeHtml(item.title)}</strong>
+              <span class="admin-pill">${escapeHtml(item.category || "Article")}</span>
+              <span class="admin-pill">${escapeHtml(item.status || "draft")}</span>
+            </div>
+          </div>
+          <time>${escapeHtml(item.updated_at || item.created_at || "")}</time>
+        </div>
+        <p>${escapeHtml(item.description || "还没有写卡片描述。")}</p>
+        <div class="admin-actions">
+          <a class="button secondary" href="article.html?id=${encodeURIComponent(item.id)}" target="_blank" rel="noreferrer">预览文章</a>
+          <button class="button primary" type="button" data-edit-markdown>继续编辑</button>
+          <button class="button danger" type="button" data-delete-markdown>删除文章</button>
+          <p class="form-status" role="status" aria-live="polite"></p>
+        </div>
+      </article>
+    `;
+  }).join("");
+
+  markdownList.querySelectorAll(".markdown-edit-row").forEach((row) => {
+    const id = row.dataset.postId;
+    const statusText = row.querySelector(".form-status");
+    row.querySelector("[data-edit-markdown]")?.addEventListener("click", async () => {
+      statusText.textContent = "正在读取文章...";
+      try {
+        const result = await api(`/api/posts/${id}`);
+        fillMarkdownForm(result.item);
+        statusText.textContent = "";
+      } catch (error) {
+        statusText.textContent = error.message;
+      }
+    });
+
+    row.querySelector("[data-delete-markdown]")?.addEventListener("click", async () => {
+      const title = row.querySelector("strong")?.textContent || "这篇文章";
+        if (!confirm(`确定删除「${title}」吗？文章目录中的记录也会一起删除。`)) return;
+      statusText.textContent = "正在删除...";
+      try {
+        await api(`/api/posts/${id}`, { method: "DELETE" });
+        statusText.textContent = "已删除。";
+        if (String(editingMarkdownId) === String(id)) resetMarkdownForm();
+        await Promise.all([loadMarkdownPosts(), loadContentItems()]);
+      } catch (error) {
+        statusText.textContent = error.message;
+      }
+    });
+  });
+}
+
+async function loadMarkdownPosts() {
+  if (!markdownList) return;
+  const result = await api("/api/posts");
+  renderMarkdownPosts(result.items || []);
+}
+
 function splitImageUrls(value) {
   return String(value || "")
     .split(/[\n,]+/)
@@ -983,6 +1195,7 @@ async function loadAdminData() {
     loadDashboard(),
     loadSettings(),
     loadContentItems(),
+    loadMarkdownPosts(),
     loadMoments(),
   ]);
 }
@@ -1045,8 +1258,33 @@ contentForm?.addEventListener("submit", async (event) => {
   }
 });
 
+markdownForm?.addEventListener("input", updateMarkdownPreview);
+
+markdownForm?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const payload = Object.fromEntries(new FormData(markdownForm).entries());
+  const button = markdownForm.querySelector('button[type="submit"]');
+  const method = editingMarkdownId ? "PATCH" : "POST";
+  const path = editingMarkdownId ? `/api/posts/${editingMarkdownId}` : "/api/posts";
+
+  if (button) button.disabled = true;
+  setStatus(markdownForm, "正在保存文章...");
+  try {
+    const result = await api(path, { method, body: JSON.stringify(payload) });
+    editingMarkdownId = result.id || editingMarkdownId;
+    setStatus(markdownForm, "文章已保存，文章目录已同步。");
+    await Promise.all([loadMarkdownPosts(), loadContentItems()]);
+  } catch (error) {
+    setStatus(markdownForm, error.message);
+  } finally {
+    if (button) button.disabled = false;
+  }
+});
+
+document.querySelector("[data-markdown-new]")?.addEventListener("click", resetMarkdownForm);
+
 document.addEventListener("change", (event) => {
-  if (event.target?.matches?.("[data-cover-import]")) {
+  if (event.target?.matches?.("[data-cover-import], [data-markdown-cover-import]")) {
     handleCoverImport(event.target);
   }
 });

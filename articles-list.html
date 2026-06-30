@@ -3,11 +3,11 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>归档 | Galois37の完美算术教室</title>
-  <meta name="description" content="Galois37 网站公开内容归档。">
+  <title>文章与杂谈 | Galois37の完美算术教室</title>
+  <meta name="description" content="Galois37 的文章、杂谈和 Markdown 记录目录。">
   <link rel="stylesheet" href="styles.css?v=20260630-article-hub-1">
 </head>
-<body data-page="archive">
+<body data-page="article-list">
   <header class="site-header" id="top">
     <a class="brand" href="index.html" aria-label="回到首页">
       <span class="brand-mark"><img src="assets/avatar.jpg" alt=""></span>
@@ -32,19 +32,25 @@
     </button>
   </header>
 
-  <main class="page-main">
-    <section class="page-hero">
-      <p class="eyebrow">Archive</p>
-      <h1>归档</h1>
-      <p data-setting-text="pages.archiveDescription">按时间收纳公开的笔记、项目、文章、资源和说说。</p>
+  <main class="page-main article-index-main">
+    <section class="page-hero article-index-hero">
+      <p class="eyebrow">Article</p>
+      <h1>文章与杂谈</h1>
+      <p>一些正式文章、随笔记录和暂时无法归类的想法，会按时间慢慢收纳在这里。</p>
     </section>
 
-    <section class="section">
-      <div class="archive-list" data-archive-board>
-        <article class="glass-card">
-          <h2>加载中...</h2>
-          <p>正在读取公开内容。</p>
-        </article>
+    <section class="section article-index-section">
+      <div class="article-timeline-shell">
+        <div class="article-timeline-head">
+          <span class="timeline-dot is-large"></span>
+          <h2 data-article-index-count>全部文章</h2>
+        </div>
+        <div class="article-timeline" data-article-index-board>
+          <article class="article-index-empty glass-card">
+            <h2>文章目录读取中</h2>
+            <p>正在从站点数据库整理 Markdown 文章。</p>
+          </article>
+        </div>
       </div>
     </section>
   </main>
@@ -57,9 +63,3 @@
   <script src="script.js?v=20260630-article-hub-1"></script>
 </body>
 </html>
-
-
-
-
-
-
