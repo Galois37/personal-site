@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>写文章 | Galois37の完美算术教室</title>
+  <meta name="description" content="Galois37 的全屏 Markdown 写作台。">
+  <link rel="stylesheet" href="styles.css?v=20260630-article-editor-1">
+</head>
+<body data-page="article-editor">
+  <header class="article-editor-header">
+    <a class="brand" href="admin.html#markdown" aria-label="回到控制台">
+      <span class="brand-mark"><img src="assets/avatar.jpg" alt=""></span>
+      <span>Galois37の完美算术教室</span>
+    </a>
+    <div class="article-editor-actions">
+      <button class="button secondary" type="button" data-editor-back>返回控制台</button>
+      <button class="button primary" type="button" data-editor-done>写好了</button>
+    </div>
+  </header>
+
+  <main class="article-editor-main">
+    <section class="article-editor-hero">
+      <p class="eyebrow">Markdown Writer</p>
+      <h1>写文章</h1>
+      <p data-editor-subtitle>左边写 Markdown，右边实时预览。完成后点“写好了”回控制台设置封面和状态。</p>
+    </section>
+
+    <section class="article-editor-shell">
+      <div class="article-editor-toolbar">
+        <div>
+          <span class="editor-pill" data-editor-title>未命名文章</span>
+          <span class="editor-pill subtle" data-editor-count>0 字符</span>
+        </div>
+        <span class="aside-text">支持标题、列表、引用、代码块、图片和链接。</span>
+      </div>
+      <div class="article-editor-grid">
+        <label class="article-editor-pane">
+          <span>正文 Markdown</span>
+          <textarea data-editor-input spellcheck="false" placeholder="# 标题&#10;&#10;在这里开始写文章..."></textarea>
+        </label>
+        <section class="article-editor-pane article-editor-preview-pane" aria-label="实时预览">
+          <div class="markdown-preview-head">
+            <strong>实时预览</strong>
+            <small>保存前可以先检查排版</small>
+          </div>
+          <div class="article-markdown article-editor-preview" data-editor-preview>
+            <p class="markdown-empty">预览会显示在这里。</p>
+          </div>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <script src="article-editor.js?v=20260630-article-editor-1"></script>
+</body>
+</html>

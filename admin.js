@@ -4,6 +4,8 @@ const contentForm = document.querySelector("[data-content-form]");
 const markdownForm = document.querySelector("[data-markdown-form]");
 const markdownList = document.querySelector("[data-markdown-list]");
 const markdownPreview = document.querySelector("[data-markdown-preview]");
+const markdownSummary = document.querySelector("[data-markdown-summary]");
+const markdownEditorButton = document.querySelector("[data-open-markdown-editor]");
 const friendForm = document.querySelector("[data-friend-form]");
 const momentForm = document.querySelector("[data-moment-form]");
 const musicForm = document.querySelector("[data-music-form]");
@@ -28,6 +30,7 @@ const deployStatus = document.querySelector("[data-deploy-status]");
 const tokenStoreKey = "galois37_admin_token";
 const userTokenKey = "galois37_user_token";
 const themeKey = "galois37_theme";
+const articleEditorDraftKey = "galois37_article_editor_draft";
 
 const defaultMusicPlaylist = [
   {
@@ -195,7 +198,7 @@ function markdownToHtml(markdown) {
       return;
     }
 
-    const heading = /^(#{1,4})\s+(.+)$/.exec(line);
+    const heading = /^(#{1,4})\s*(.+)$/.exec(line);
     if (heading) {
       closeList();
       const level = heading[1].length;
@@ -832,10 +835,62 @@ function markdownCoverFromItem(item) {
   return item.cover || (parts.length > 1 ? parts.slice(1).join("|") : "");
 }
 
+function readArticleEditorDraft() {
+  try {
+    return JSON.parse(localStorage.getItem(articleEditorDraftKey) || "{}");
+  } catch (error) {
+    return {};
+  }
+}
+
+function writeArticleEditorDraft(extra = {}) {
+  if (!markdownForm) return;
+  const draft = {
+    id: editingMarkdownId || "",
+    title: markdownForm.elements.title?.value || "",
+    category: markdownForm.elements.category?.value || "Article",
+    description: markdownForm.elements.description?.value || "",
+    cover: markdownForm.elements.cover?.value || "",
+    content: markdownForm.elements.content?.value || "",
+    status: markdownForm.elements.status?.value || "draft",
+    updatedAt: new Date().toISOString(),
+    ...extra,
+  };
+  localStorage.setItem(articleEditorDraftKey, JSON.stringify(draft));
+}
+
+function restoreArticleEditorDraft() {
+  if (!markdownForm) return;
+  const draft = readArticleEditorDraft();
+  if (!draft || Object.keys(draft).length === 0 || draft.consumed) return;
+  editingMarkdownId = draft.id || editingMarkdownId;
+  if (draft.title !== undefined) markdownForm.elements.title.value = draft.title || "";
+  if (draft.category !== undefined) markdownForm.elements.category.value = draft.category || "Article";
+  if (draft.description !== undefined) markdownForm.elements.description.value = draft.description || "";
+  if (draft.cover !== undefined) markdownForm.elements.cover.value = draft.cover || "";
+  if (draft.content !== undefined) markdownForm.elements.content.value = draft.content || "";
+  if (draft.status !== undefined) markdownForm.elements.status.value = draft.status || "draft";
+  updateMarkdownPreview();
+  if (location.hash.slice(1) === "markdown") {
+    setStatus(markdownForm, draft.content ? "正文已从编辑器带回。可以继续设置封面和状态。" : "");
+  }
+}
+
+function markdownSummaryText(content) {
+  const source = String(content || "").trim();
+  if (!source) return "正文还没有开始写。";
+  const lines = source.split(/\n+/).map((line) => line.trim()).filter(Boolean);
+  const first = lines[0] || "";
+  const count = source.length;
+  return `${first.replace(/^#{1,6}\s*/, "").slice(0, 34)}${first.length > 34 ? "..." : ""} · ${count} 字符`;
+}
+
 function updateMarkdownPreview() {
-  if (!markdownForm || !markdownPreview) return;
+  if (!markdownForm) return;
   const content = markdownForm.elements.content?.value || "";
-  markdownPreview.innerHTML = markdownToHtml(content);
+  if (markdownPreview) markdownPreview.innerHTML = markdownToHtml(content);
+  if (markdownSummary) markdownSummary.textContent = markdownSummaryText(content);
+  writeArticleEditorDraft({ content });
 }
 
 function resetMarkdownForm() {
@@ -845,6 +900,7 @@ function resetMarkdownForm() {
   markdownForm.elements.category.value = "Article";
   markdownForm.elements.status.value = "draft";
   updateMarkdownPreview();
+  localStorage.removeItem(articleEditorDraftKey);
   setStatus(markdownForm, "");
 }
 
@@ -857,6 +913,7 @@ function fillMarkdownForm(item) {
   markdownForm.elements.cover.value = markdownCoverFromItem(item);
   markdownForm.elements.content.value = item.content || "";
   markdownForm.elements.status.value = item.status || "draft";
+  writeArticleEditorDraft();
   updateMarkdownPreview();
   setAdminView("markdown");
   markdownForm.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -1198,6 +1255,7 @@ async function loadAdminData() {
     loadMarkdownPosts(),
     loadMoments(),
   ]);
+  restoreArticleEditorDraft();
 }
 
 themeToggle?.addEventListener("click", () => {
@@ -1260,6 +1318,11 @@ contentForm?.addEventListener("submit", async (event) => {
 
 markdownForm?.addEventListener("input", updateMarkdownPreview);
 
+markdownEditorButton?.addEventListener("click", () => {
+  writeArticleEditorDraft();
+  window.location.href = "article-editor.html";
+});
+
 markdownForm?.addEventListener("submit", async (event) => {
   event.preventDefault();
   const payload = Object.fromEntries(new FormData(markdownForm).entries());
@@ -1272,6 +1335,7 @@ markdownForm?.addEventListener("submit", async (event) => {
   try {
     const result = await api(path, { method, body: JSON.stringify(payload) });
     editingMarkdownId = result.id || editingMarkdownId;
+    writeArticleEditorDraft({ id: editingMarkdownId });
     setStatus(markdownForm, "文章已保存，文章目录已同步。");
     await Promise.all([loadMarkdownPosts(), loadContentItems()]);
   } catch (error) {

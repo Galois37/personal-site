@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>控制台 | Galois37の完美算术教室</title>
   <meta name="description" content="Galois37 网站控制台。">
-  <link rel="stylesheet" href="styles.css?v=20260630-article-hub-1">
+  <link rel="stylesheet" href="styles.css?v=20260630-article-editor-1">
 </head>
 <body data-page="admin">
   <main class="admin-shell">
@@ -167,16 +167,15 @@
             <input type="file" accept="image/*" data-markdown-cover-import>
             <span>选择后会自动填入上方封面字段。</span>
           </label>
-          <div class="markdown-editor-grid">
-            <label class="markdown-editor-pane">正文 Markdown<textarea name="content" rows="18" placeholder="# 标题&#10;&#10;这里开始写正文。&#10;&#10;![图片说明](assets/articles/demo.jpg)"></textarea></label>
-            <section class="markdown-preview-pane" aria-label="Markdown 预览">
-              <div class="markdown-preview-head">
-                <span>实时预览</span>
-                <small>保存前可先检查排版</small>
-              </div>
-              <article class="article-markdown" data-markdown-preview></article>
-            </section>
-          </div>
+          <input type="hidden" name="content" data-markdown-content-store>
+          <section class="markdown-launch-card">
+            <div>
+              <span class="eyebrow">Markdown Editor</span>
+              <h3>正文编辑</h3>
+              <p data-markdown-summary>正文还没有开始写。</p>
+            </div>
+            <button class="button primary" type="button" data-open-markdown-editor>写文章</button>
+          </section>
           <label>
             状态
             <select name="status">
@@ -312,7 +311,7 @@
     </section>
   </main>
 
-  <script src="admin.js?v=20260630-article-hub-1"></script>
+  <script src="admin.js?v=20260630-article-editor-1"></script>
 </body>
 </html>
 

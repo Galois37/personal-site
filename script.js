@@ -276,7 +276,7 @@ function markdownToHtml(markdown) {
       return;
     }
 
-    const heading = /^(#{1,4})\s+(.+)$/.exec(line);
+    const heading = /^(#{1,4})\s*(.+)$/.exec(line);
     if (heading) {
       closeList();
       const level = heading[1].length;
@@ -1101,12 +1101,7 @@ function renderArticleIndex(items) {
   const visiblePosts = items.filter((item) => (item.status || "visible") === "visible");
   if (articleIndexCount) articleIndexCount.textContent = `全部文章 - ${visiblePosts.length}`;
   if (!visiblePosts.length) {
-    articleIndexBoard.innerHTML = `
-      <article class="article-index-empty glass-card">
-        <h2>文章还在整理中</h2>
-        <p>之后在控制台发布的 Markdown 文章会按年份出现在这里。</p>
-      </article>
-    `;
+    articleIndexBoard.innerHTML = "";
     return;
   }
 
