@@ -44,7 +44,10 @@
     const html = [];
     const paragraph = [];
     let inCode = false;
+    let inMath = false;
     let code = [];
+    let math = [];
+    let mathClose = "\\]";
     let list = null;
 
     function closeList() {
@@ -67,6 +70,17 @@
         return;
       }
 
+      if (inMath) {
+        if (line.trim() === mathClose) {
+          html.push(`<div class="math-block">${mathClose === "$$" ? "$$" : "\\["}${escapeHtml(math.join("\n"))}${mathClose}</div>`);
+          math = [];
+          inMath = false;
+        } else {
+          math.push(line);
+        }
+        return;
+      }
+
       if (inCode) {
         code.push(line);
         return;
@@ -75,6 +89,15 @@
       if (!line.trim()) {
         flushParagraph(paragraph, html);
         closeList();
+        return;
+      }
+
+      if (line.trim() === "\\[" || line.trim() === "$$") {
+        flushParagraph(paragraph, html);
+        closeList();
+        inMath = true;
+        mathClose = line.trim() === "$$" ? "$$" : "\\]";
+        math = [];
         return;
       }
 
@@ -113,7 +136,25 @@
     flushParagraph(paragraph, html);
     closeList();
     if (inCode) html.push(`<pre><code>${escapeHtml(code.join("\n"))}</code></pre>`);
+    if (inMath) html.push(`<div class="math-block">${mathClose === "$$" ? "$$" : "\\["}${escapeHtml(math.join("\n"))}${mathClose}</div>`);
     return html.join("\n");
+  }
+
+  function typesetMath(container, attempts = 0) {
+    if (!container || !window.MathJax) return;
+    if (!window.MathJax.typesetPromise && !window.MathJax.typeset && attempts < 30) {
+      window.setTimeout(() => typesetMath(container, attempts + 1), 150);
+      return;
+    }
+    const run = () => {
+      if (window.MathJax.typesetPromise) {
+        window.MathJax.typesetPromise([container]).catch(() => {});
+      } else if (window.MathJax.typeset) {
+        window.MathJax.typeset([container]);
+      }
+    };
+    if (window.MathJax.startup?.promise) window.MathJax.startup.promise.then(run);
+    else run();
   }
 
   function readDraft() {
@@ -137,7 +178,10 @@
 
   function render() {
     const content = input?.value || "";
-    if (preview) preview.innerHTML = markdownToHtml(content);
+    if (preview) {
+      preview.innerHTML = markdownToHtml(content);
+      typesetMath(preview);
+    }
     if (countLabel) countLabel.textContent = `${content.trim().length} 字符`;
     writeDraft();
   }

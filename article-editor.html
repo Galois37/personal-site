@@ -5,7 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>写文章 | Galois37の完美算术教室</title>
   <meta name="description" content="Galois37 的全屏 Markdown 写作台。">
-  <link rel="stylesheet" href="styles.css?v=20260630-article-editor-1">
+  <link rel="stylesheet" href="styles.css?v=20260630-mathjax-1">
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [["\\(", "\\)"], ["$", "$"]],
+        displayMath: [["\\[", "\\]"], ["$$", "$$"]],
+        processEscapes: true
+      },
+      svg: { fontCache: "global" }
+    };
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
 </head>
 <body data-page="article-editor">
   <header class="article-editor-header">
@@ -52,6 +63,6 @@
     </section>
   </main>
 
-  <script src="article-editor.js?v=20260630-article-editor-1"></script>
+  <script src="article-editor.js?v=20260630-mathjax-1"></script>
 </body>
 </html>

@@ -240,7 +240,10 @@ function markdownToHtml(markdown) {
   const lines = source.split("\n");
   const html = [];
   let inCode = false;
+  let inMath = false;
   let codeLines = [];
+  let mathLines = [];
+  let mathClose = "\\]";
   let listType = "";
 
   const closeList = () => {
@@ -255,6 +258,13 @@ function markdownToHtml(markdown) {
     inCode = false;
   };
 
+  const closeMath = () => {
+    const open = mathClose === "$$" ? "$$" : "\\[";
+    html.push(`<div class="math-block">${open}${escapeHtml(mathLines.join("\n"))}${mathClose}</div>`);
+    mathLines = [];
+    inMath = false;
+  };
+
   lines.forEach((line) => {
     if (/^\s*```/.test(line)) {
       if (inCode) closeCode();
@@ -266,6 +276,12 @@ function markdownToHtml(markdown) {
       return;
     }
 
+    if (inMath) {
+      if (line.trim() === mathClose) closeMath();
+      else mathLines.push(line);
+      return;
+    }
+
     if (inCode) {
       codeLines.push(line);
       return;
@@ -273,6 +289,14 @@ function markdownToHtml(markdown) {
 
     if (!line.trim()) {
       closeList();
+      return;
+    }
+
+    if (line.trim() === "\\[" || line.trim() === "$$") {
+      closeList();
+      inMath = true;
+      mathClose = line.trim() === "$$" ? "$$" : "\\]";
+      mathLines = [];
       return;
     }
 
@@ -318,8 +342,26 @@ function markdownToHtml(markdown) {
   });
 
   if (inCode) closeCode();
+  if (inMath) closeMath();
   closeList();
   return html.join("");
+}
+
+function typesetMath(container, attempts = 0) {
+  if (!container || !window.MathJax) return;
+  if (!window.MathJax.typesetPromise && !window.MathJax.typeset && attempts < 30) {
+    window.setTimeout(() => typesetMath(container, attempts + 1), 150);
+    return;
+  }
+  const run = () => {
+    if (window.MathJax.typesetPromise) {
+      window.MathJax.typesetPromise([container]).catch(() => {});
+    } else if (window.MathJax.typeset) {
+      window.MathJax.typeset([container]);
+    }
+  };
+  if (window.MathJax.startup?.promise) window.MathJax.startup.promise.then(run);
+  else run();
 }
 
 function imageUrlWithVersion(url, version) {
@@ -1193,7 +1235,10 @@ async function loadArticlePage() {
       }
     }
 
-    if (articleContent) articleContent.innerHTML = markdownToHtml(item.content || "");
+    if (articleContent) {
+      articleContent.innerHTML = markdownToHtml(item.content || "");
+      typesetMath(articleContent);
+    }
   } catch (error) {
     setArticleError(error.message);
   }

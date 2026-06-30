@@ -1604,6 +1604,18 @@ body:not([data-page="home"]) .section {
   background: transparent;
 }
 
+.article-markdown .math-block {
+  overflow-x: auto;
+  margin: 1.2em 0;
+  padding: 0.4em 0;
+}
+
+.article-markdown mjx-container {
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
 .markdown-empty {
   color: var(--muted);
 }
